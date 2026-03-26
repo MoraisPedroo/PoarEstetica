@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão - Poar Estética</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="top-header">
+            <a href="index.html" class="header-brand">
+                <div class="header-logo">P</div>
+                <div>
+                    <h1 class="header-title">Poar</h1>
+                    <p class="header-subtitle">Estética</p>
+                </div>
+            </a>
+            <nav class="desktop-nav">
+                <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Início</a>
+                <a href="agendar.html" class="nav-link"><i class="far fa-calendar-plus"></i> Agendar</a>
+                <a href="catalogo.html" class="nav-link"><i class="fas fa-th-large"></i> Catálogo</a>
+                <a href="gestao.html" class="nav-link active"><i class="fas fa-cog"></i> Gestão</a>
+            </nav>
+            <div class="header-actions">
+                <span class="text-sm fw-600" id="gestao-user-name" style="color: var(--text-muted);"></span>
+                <button class="header-link" onclick="handleLogout()" style="color: var(--danger); border-color: var(--danger-bg);">
+                    <i class="fas fa-sign-out-alt"></i><span>Sair</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('dashboard', this)"><i class="fas fa-chart-pie"></i> Resumo</button>
+            <button class="tab-btn" onclick="switchTab('servicos', this)"><i class="fas fa-spa"></i> Serviços</button>
+            <button class="tab-btn" onclick="switchTab('produtos', this)"><i class="fas fa-pump-soap"></i> Produtos</button>
+            <button class="tab-btn" onclick="switchTab('agenda', this)"><i class="fas fa-calendar-alt"></i> Agenda</button>
+        </div>
+
+        <main class="main-content" style="padding-bottom: 80px;">
+
+            <!-- ===== DASHBOARD ===== -->
+            <div class="tab-content active" id="tab-dashboard">
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-icon" style="color: var(--accent);"><i class="fas fa-calendar-check"></i></div>
+                        <div class="stat-card-value" id="stat-bookings">0</div>
+                        <div class="stat-card-label">Agendamentos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon" style="color: var(--success);"><i class="fas fa-spa"></i></div>
+                        <div class="stat-card-value" id="stat-services">0</div>
+                        <div class="stat-card-label">Serviços</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon" style="color: var(--brand-500);"><i class="fas fa-pump-soap"></i></div>
+                        <div class="stat-card-value" id="stat-products">0</div>
+                        <div class="stat-card-label">Produtos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon" style="color: var(--warning);"><i class="fas fa-users"></i></div>
+                        <div class="stat-card-value" id="stat-clients">0</div>
+                        <div class="stat-card-label">Clientes</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h3 class="section-title">Próximos Agendamentos</h3>
+                    </div>
+                </div>
+                <div class="page-padding" style="padding-top: 0;" id="dashboard-bookings"></div>
+            </div>
+
+            <!-- ===== SERVIÇOS ===== -->
+            <div class="tab-content" id="tab-servicos">
+                <div class="page-padding">
+                    <div class="card mb-16">
+                        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-dark); margin-bottom: 14px;">
+                            <i class="fas fa-plus-circle" style="color: var(--accent);"></i> Novo Serviço
+                        </h3>
+                        <form id="form-service" onsubmit="saveService(event)">
+                            <div class="form-group">
+                                <label class="form-label">Nome do serviço</label>
+                                <input type="text" class="form-control" id="svc-name" placeholder="Ex: Limpeza de Pele" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Descrição</label>
+                                <input type="text" class="form-control" id="svc-desc" placeholder="Breve descrição do serviço">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Preço (R$)</label>
+                                    <input type="number" step="0.01" min="0" class="form-control" id="svc-price" placeholder="120.00" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">URL da Imagem</label>
+                                    <input type="url" class="form-control" id="svc-image" placeholder="https://...">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Duração (min)</label>
+                                    <div style="background: var(--bg-app); padding: 10px; border-radius: var(--r-sm);">
+                                        <p class="text-xs text-muted mb-8"><i class="far fa-clock"></i> Visível para o cliente</p>
+                                        <input type="number" min="10" step="5" class="form-control" id="svc-duration" placeholder="60" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Preparação (min)</label>
+                                    <div style="background: var(--warning-bg); padding: 10px; border-radius: var(--r-sm);">
+                                        <p class="text-xs" style="color: var(--warning);"><i class="fas fa-eye-slash"></i> Oculto do cliente</p>
+                                        <input type="number" min="0" step="5" class="form-control mt-8" id="svc-prep" placeholder="15" value="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="form-hint mb-16">
+                                <i class="fas fa-info-circle"></i> O tempo de preparação bloqueia a agenda entre atendimentos, mas o cliente não vê esse tempo.
+                            </p>
+                            <button type="submit" class="btn btn-primary btn-full"><i class="fas fa-save"></i> Salvar Serviço</button>
+                        </form>
+                    </div>
+
+                    <h3 class="section-title mb-12">Serviços Cadastrados</h3>
+                    <div id="services-list"></div>
+                </div>
+            </div>
+
+            <!-- ===== PRODUTOS ===== -->
+            <div class="tab-content" id="tab-produtos">
+                <div class="page-padding">
+                    <div class="card mb-16">
+                        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-dark); margin-bottom: 14px;">
+                            <i class="fas fa-plus-circle" style="color: var(--accent);"></i> Novo Produto
+                        </h3>
+                        <form id="form-product" onsubmit="saveProduct(event)">
+                            <div class="form-group">
+                                <label class="form-label">Nome do produto</label>
+                                <input type="text" class="form-control" id="prod-name" placeholder="Ex: Protetor Solar FPS50" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Descrição</label>
+                                <input type="text" class="form-control" id="prod-desc" placeholder="Breve descrição">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Preço (R$)</label>
+                                    <input type="number" step="0.01" min="0" class="form-control" id="prod-price" placeholder="89.90" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">URL da Imagem</label>
+                                    <input type="url" class="form-control" id="prod-image" placeholder="https://...">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full"><i class="fas fa-save"></i> Salvar Produto</button>
+                        </form>
+                    </div>
+
+                    <h3 class="section-title mb-12">Produtos Cadastrados</h3>
+                    <div id="products-list"></div>
+                </div>
+            </div>
+
+            <!-- ===== AGENDA ===== -->
+            <div class="tab-content" id="tab-agenda">
+                <div class="page-padding">
+                    <div class="form-group">
+                        <label class="form-label">Filtrar por data</label>
+                        <input type="date" class="form-control" id="agenda-date-filter" onchange="renderAgenda()">
+                    </div>
+                    <div id="agenda-list"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modal exclusão -->
+        <div class="modal-overlay" id="delete-overlay" onclick="closeDeleteModal()"></div>
+        <div class="bottom-sheet" id="delete-sheet">
+            <div class="bottom-sheet-handle"></div>
+            <div class="text-center">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: var(--danger); margin-bottom: 12px;"></i>
+                <h3 class="bottom-sheet-title">Confirmar exclusão?</h3>
+                <p class="text-sm text-muted mb-16" id="delete-message"></p>
+                <div class="flex gap-8">
+                    <button class="btn btn-outline" style="flex:1;" onclick="closeDeleteModal()">Cancelar</button>
+                    <button class="btn btn-danger" style="flex:1;" onclick="confirmDelete()">Excluir</button>
+                </div>
+            </div>
+        </div>
+
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-btn"><i class="fas fa-home"></i><span>Início</span></a>
+            <a href="agendar.html" class="nav-btn"><i class="far fa-calendar-plus"></i><span>Agendar</span></a>
+            <a href="catalogo.html" class="nav-btn"><i class="fas fa-th-large"></i><span>Catálogo</span></a>
+            <a href="gestao.html" class="nav-btn active"><i class="fas fa-cog"></i><span>Gestão</span></a>
+        </nav>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="app.js"></script>
+    <script>
+        let deleteTarget = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = getCurrentUser();
+            if (!user || user.role !== 'gestao') {
+                window.location.href = 'login.html';
+                return;
+            }
+            document.getElementById('gestao-user-name').textContent = user.name || user.email.split('@')[0];
+            document.getElementById('agenda-date-filter').value = new Date().toISOString().split('T')[0];
+            refreshAll();
+        });
+
+        function switchTab(name, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('tab-' + name).classList.add('active');
+            if (name === 'agenda') renderAgenda();
+        }
+
+        function refreshAll() {
+            renderDashboard();
+            renderServicesList();
+            renderProductsList();
+            renderAgenda();
+        }
+
+        // --- Dashboard ---
+        function renderDashboard() {
+            const bookings = getBookings();
+            const services = getServices();
+            const products = getProducts();
+            const clients = [...new Set(bookings.map(b => b.clientPhone).filter(Boolean))];
+
+            document.getElementById('stat-bookings').textContent = bookings.length;
+            document.getElementById('stat-services').textContent = services.length;
+            document.getElementById('stat-products').textContent = products.length;
+            document.getElementById('stat-clients').textContent = clients.length;
+
+            const today = new Date().toISOString().split('T')[0];
+            const upcoming = bookings
+                .filter(b => b.date >= today)
+                .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
+                .slice(0, 8);
+
+            const container = document.getElementById('dashboard-bookings');
+            if (upcoming.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="far fa-calendar"></i><p>Nenhum agendamento próximo</p></div>';
+                return;
+            }
+
+            container.innerHTML = upcoming.map(b => {
+                const dateF = new Date(b.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                const totalTime = (b.duration || 0) + (b.prepTime || 0);
+                return `
+                    <div class="agenda-item">
+                        <div class="agenda-time">${b.time}<br><span class="text-xs text-muted">${dateF}</span></div>
+                        <div class="agenda-info">
+                            <div class="agenda-client">${b.clientName}</div>
+                            <div class="agenda-service">${b.serviceName} · ${b.duration}min</div>
+                            ${b.prepTime > 0 ? `<div class="agenda-prep"><i class="fas fa-eye-slash"></i> +${b.prepTime}min prep (bloqueio: ${totalTime}min)</div>` : ''}
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        // --- Serviços ---
+        function saveService(e) {
+            e.preventDefault();
+            const service = {
+                id: Date.now().toString(),
+                name: document.getElementById('svc-name').value.trim(),
+                description: document.getElementById('svc-desc').value.trim(),
+                price: parseFloat(document.getElementById('svc-price').value),
+                image: document.getElementById('svc-image').value.trim(),
+                duration: parseInt(document.getElementById('svc-duration').value),
+                prepTime: parseInt(document.getElementById('svc-prep').value) || 0
+            };
+            if (!service.name || !service.price || !service.duration) {
+                showToast('Preencha os campos obrigatórios', 'error'); return;
+            }
+            const services = getServices();
+            services.push(service);
+            localStorage.setItem('poar_services', JSON.stringify(services));
+            document.getElementById('form-service').reset();
+            document.getElementById('svc-prep').value = '0';
+            showToast('Serviço cadastrado!', 'success');
+            refreshAll();
+        }
+
+        function renderServicesList() {
+            const services = getServices();
+            const container = document.getElementById('services-list');
+            if (services.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-spa"></i><p>Nenhum serviço cadastrado</p></div>';
+                return;
+            }
+            container.innerHTML = services.map(s => `
+                <div class="card" style="margin-bottom: 8px;">
+                    <div class="list-item" style="padding: 0; border: none;">
+                        <div class="list-item-icon"><i class="fas fa-spa"></i></div>
+                        <div class="list-item-content">
+                            <div class="list-item-title">${s.name}</div>
+                            <div class="list-item-subtitle">
+                                ${s.duration}min
+                                ${s.prepTime > 0 ? `<span class="prep-indicator"><i class="fas fa-eye-slash"></i> +${s.prepTime}min prep</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="list-item-end">
+                            <div class="list-item-price">R$ ${fmtPrice(s.price)}</div>
+                            <button class="btn btn-ghost btn-sm" style="color: var(--danger); padding: 4px 8px;" onclick="requestDelete('service', '${s.id}', '${s.name}')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>`).join('');
+        }
+
+        // --- Produtos ---
+        function saveProduct(e) {
+            e.preventDefault();
+            const product = {
+                id: Date.now().toString(),
+                name: document.getElementById('prod-name').value.trim(),
+                description: document.getElementById('prod-desc').value.trim(),
+                price: parseFloat(document.getElementById('prod-price').value),
+                image: document.getElementById('prod-image').value.trim()
+            };
+            if (!product.name || !product.price) {
+                showToast('Preencha os campos obrigatórios', 'error'); return;
+            }
+            const products = getProducts();
+            products.push(product);
+            localStorage.setItem('poar_products', JSON.stringify(products));
+            document.getElementById('form-product').reset();
+            showToast('Produto cadastrado!', 'success');
+            refreshAll();
+        }
+
+        function renderProductsList() {
+            const products = getProducts();
+            const container = document.getElementById('products-list');
+            if (products.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-pump-soap"></i><p>Nenhum produto cadastrado</p></div>';
+                return;
+            }
+            container.innerHTML = products.map(p => `
+                <div class="card" style="margin-bottom: 8px;">
+                    <div class="list-item" style="padding: 0; border: none;">
+                        <div class="list-item-icon" style="background: var(--brand-100);"><i class="fas fa-pump-soap"></i></div>
+                        <div class="list-item-content">
+                            <div class="list-item-title">${p.name}</div>
+                            <div class="list-item-subtitle">${p.description || 'Sem descrição'}</div>
+                        </div>
+                        <div class="list-item-end">
+                            <div class="list-item-price">R$ ${fmtPrice(p.price)}</div>
+                            <button class="btn btn-ghost btn-sm" style="color: var(--danger); padding: 4px 8px;" onclick="requestDelete('product', '${p.id}', '${p.name}')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>`).join('');
+        }
+
+        // --- Agenda ---
+        function renderAgenda() {
+            const dateFilter = document.getElementById('agenda-date-filter').value;
+            const bookings = getBookings()
+                .filter(b => !dateFilter || b.date === dateFilter)
+                .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
+            const container = document.getElementById('agenda-list');
+            if (bookings.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="far fa-calendar"></i><p>Nenhum agendamento nesta data</p></div>';
+                return;
+            }
+
+            container.innerHTML = bookings.map(b => {
+                const totalTime = (b.duration || 0) + (b.prepTime || 0);
+                const endTime = minToTime(timeToMin(b.time) + totalTime);
+                return `
+                    <div class="agenda-item">
+                        <div style="min-width: 65px;">
+                            <div class="agenda-time">${b.time}</div>
+                            <div class="text-xs text-muted">até ${endTime}</div>
+                        </div>
+                        <div class="agenda-info" style="flex: 1;">
+                            <div class="agenda-client">${b.clientName}</div>
+                            <div class="agenda-service">${b.serviceName} · ${b.duration}min</div>
+                            ${b.prepTime > 0 ? `<div class="agenda-prep"><i class="fas fa-eye-slash"></i> +${b.prepTime}min prep (bloqueio: ${totalTime}min)</div>` : ''}
+                            <div class="text-xs text-muted mt-4"><i class="fab fa-whatsapp"></i> ${b.clientPhone || 'Não informado'}</div>
+                        </div>
+                        <button class="btn btn-ghost btn-sm" style="color: var(--danger);" onclick="requestDelete('booking', '${b.id}', '${b.clientName}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>`;
+            }).join('');
+        }
+
+        // --- Delete ---
+        function requestDelete(type, id, name) {
+            deleteTarget = { type, id };
+            document.getElementById('delete-message').textContent = 'Deseja excluir "' + name + '"? Esta ação não pode ser desfeita.';
+            openModal('delete-overlay', 'delete-sheet');
+        }
+
+        function closeDeleteModal() { closeModal('delete-overlay', 'delete-sheet'); deleteTarget = null; }
+
+        function confirmDelete() {
+            if (!deleteTarget) return;
+            const key = deleteTarget.type === 'service' ? 'poar_services' :
+                        deleteTarget.type === 'product' ? 'poar_products' : 'poar_bookings';
+            const items = JSON.parse(localStorage.getItem(key) || '[]').filter(i => i.id !== deleteTarget.id);
+            localStorage.setItem(key, JSON.stringify(items));
+            closeDeleteModal();
+            showToast('Excluído com sucesso', 'success');
+            refreshAll();
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('poar_current_user');
+            showToast('Saiu da conta', 'success');
+            setTimeout(() => window.location.href = 'login.html', 500);
+        }
+    </script>
+</body>
+</html>

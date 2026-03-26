@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poar Estética</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-shell">
+        <!-- Top Header -->
+        <header class="top-header">
+            <a href="index.html" class="header-brand">
+                <div class="header-logo">P</div>
+                <div>
+                    <h1 class="header-title">Poar</h1>
+                    <p class="header-subtitle">Estética</p>
+                </div>
+            </a>
+
+            <!-- Desktop Nav -->
+            <nav class="desktop-nav" aria-label="Menu principal">
+                <a href="index.html" class="nav-link active"><i class="fas fa-home"></i> Início</a>
+                <a href="agendar.html" class="nav-link"><i class="far fa-calendar-plus"></i> Agendar</a>
+                <a href="catalogo.html" class="nav-link"><i class="fas fa-th-large"></i> Catálogo</a>
+            </nav>
+
+            <div class="header-actions">
+                <a href="login.html" class="header-link" id="header-user-btn">
+                    <i class="far fa-user"></i>
+                    <span id="header-user-name">Entrar</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Hero -->
+            <div class="hero-section">
+                <div class="hero-banner">
+                    <div class="hero-content">
+                        <span class="hero-tag">Bem-vinda</span>
+                        <h2 class="hero-title">A sua Beleza, Elevada</h2>
+                        <p class="hero-subtitle">Cuidados essenciais para sua pele radiante</p>
+                        <a href="catalogo.html" class="hero-btn"><i class="fas fa-arrow-right"></i> Ver Catálogo e Serviços</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Serviços -->
+            <div class="section">
+                <div class="section-header">
+                    <h3 class="section-title">Serviços Populares</h3>
+                    <a href="catalogo.html" class="section-link">Ver todos <i class="fas fa-chevron-right" style="font-size:0.6rem;"></i></a>
+                </div>
+            </div>
+            <div class="scroll-row" id="home-services"></div>
+
+            <!-- Produtos -->
+            <div class="section mt-24">
+                <div class="section-header">
+                    <h3 class="section-title">Produtos em Destaque</h3>
+                    <a href="catalogo.html#produtos" class="section-link">Ver todos <i class="fas fa-chevron-right" style="font-size:0.6rem;"></i></a>
+                </div>
+            </div>
+            <div class="scroll-row" id="home-products"></div>
+
+            <div style="height: 32px;"></div>
+        </main>
+
+        <!-- WhatsApp FAB -->
+        <a href="https://wa.me/5500000000000" target="_blank" class="fab-whatsapp" aria-label="WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+        </a>
+
+        <!-- Mobile Bottom Nav -->
+        <nav class="bottom-nav" aria-label="Menu principal">
+            <a href="index.html" class="nav-btn active"><i class="fas fa-home"></i><span>Início</span></a>
+            <a href="agendar.html" class="nav-btn"><i class="far fa-calendar-plus"></i><span>Agendar</span></a>
+            <a href="catalogo.html" class="nav-btn"><i class="fas fa-th-large"></i><span>Catálogo</span></a>
+            <a href="login.html" class="nav-btn"><i class="far fa-user"></i><span>Entrar</span></a>
+        </nav>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            renderHomeServices();
+            renderHomeProducts();
+
+            // Atualiza botão de login/nome
+            const user = getCurrentUser();
+            if (user) {
+                document.getElementById('header-user-name').textContent = user.name || user.email.split('@')[0];
+                document.getElementById('header-user-btn').href = user.role === 'gestao' ? 'gestao.html' : 'login.html';
+
+                // mobile
+                const mobileLogin = document.querySelector('.bottom-nav a[href="login.html"]');
+                if (mobileLogin) {
+                    mobileLogin.querySelector('span').textContent = user.name || 'Perfil';
+                    if (user.role === 'gestao') mobileLogin.href = 'gestao.html';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

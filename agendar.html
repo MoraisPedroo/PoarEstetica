@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendar - Poar Estética</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="top-header">
+            <a href="index.html" class="header-brand">
+                <div class="header-logo">P</div>
+                <div>
+                    <h1 class="header-title">Poar</h1>
+                    <p class="header-subtitle">Estética</p>
+                </div>
+            </a>
+            <nav class="desktop-nav">
+                <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Início</a>
+                <a href="agendar.html" class="nav-link active"><i class="far fa-calendar-plus"></i> Agendar</a>
+                <a href="catalogo.html" class="nav-link"><i class="fas fa-th-large"></i> Catálogo</a>
+            </nav>
+            <div class="header-actions">
+                <a href="login.html" class="header-link" id="header-user-btn"><i class="far fa-user"></i><span id="header-user-name">Entrar</span></a>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Indicador de agendamentos ativos -->
+            <div class="section" style="padding-top: 16px;">
+                <div class="flex items-center justify-between">
+                    <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--text-dark);">Agendar Visita</h2>
+                    <div class="booking-indicator" id="active-bookings-badge" style="display: none;">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="active-bookings-count">0 agendamentos ativos</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendário Mensal -->
+            <div class="calendar-header">
+                <button class="calendar-nav" style="border:none; background:none; padding:0;">
+                    <button onclick="changeMonth(-1)" aria-label="Mês anterior"><i class="fas fa-chevron-left"></i></button>
+                </button>
+                <h2 id="calendar-month-label"></h2>
+                <button class="calendar-nav" style="border:none; background:none; padding:0;">
+                    <button onclick="changeMonth(1)" aria-label="Próximo mês"><i class="fas fa-chevron-right"></i></button>
+                </button>
+            </div>
+
+            <div class="calendar-weekdays" id="calendar-weekdays">
+                <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+            </div>
+
+            <div class="calendar-grid" id="calendar-grid"></div>
+
+            <div style="height: 24px;"></div>
+        </main>
+
+        <!-- ===== MODAL: Detalhes do Dia (horários) ===== -->
+        <div class="modal-overlay" id="day-overlay" onclick="closeDayModal()"></div>
+        <div class="bottom-sheet" id="day-sheet">
+            <div class="bottom-sheet-handle"></div>
+            <div class="flex items-center justify-between mb-16">
+                <h3 class="bottom-sheet-title" id="day-sheet-title" style="margin-bottom:0;"></h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeDayModal()" style="color: var(--text-muted);"><i class="fas fa-times"></i></button>
+            </div>
+            <p class="text-sm text-muted mb-16">Escolha um horário disponível:</p>
+            <div class="time-grid" id="day-time-grid"></div>
+        </div>
+
+        <!-- ===== MODAL: Serviços disponíveis para o horário ===== -->
+        <div class="modal-overlay" id="svc-overlay" onclick="closeSvcModal()"></div>
+        <div class="bottom-sheet" id="svc-sheet">
+            <div class="bottom-sheet-handle"></div>
+            <div class="flex items-center justify-between mb-8">
+                <h3 class="bottom-sheet-title" id="svc-sheet-title" style="margin-bottom:0;"></h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeSvcModal()" style="color: var(--text-muted);"><i class="fas fa-times"></i></button>
+            </div>
+            <p class="text-sm text-muted mb-16" id="svc-sheet-subtitle"></p>
+            <div id="svc-options-list"></div>
+        </div>
+
+        <!-- ===== MODAL: Confirmar agendamento / Login ===== -->
+        <div class="modal-overlay" id="confirm-overlay" onclick="closeConfirmModal()"></div>
+        <div class="bottom-sheet" id="confirm-sheet">
+            <div class="bottom-sheet-handle"></div>
+            <div id="confirm-content"></div>
+        </div>
+
+        <!-- Mobile Nav -->
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-btn"><i class="fas fa-home"></i><span>Início</span></a>
+            <a href="agendar.html" class="nav-btn active"><i class="far fa-calendar-plus"></i><span>Agendar</span></a>
+            <a href="catalogo.html" class="nav-btn"><i class="fas fa-th-large"></i><span>Catálogo</span></a>
+            <a href="login.html" class="nav-btn"><i class="far fa-user"></i><span>Entrar</span></a>
+        </nav>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="app.js"></script>
+    <script>
+        // State
+        let currentYear, currentMonth;
+        let selectedDate = null;
+        let selectedTime = null;
+        let selectedService = null;
+
+        const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            currentYear = now.getFullYear();
+            currentMonth = now.getMonth();
+            renderCalendar();
+            updateBookingsBadge();
+            updateHeaderUser();
+        });
+
+        function updateHeaderUser() {
+            const user = getCurrentUser();
+            if (user) {
+                document.getElementById('header-user-name').textContent = user.name || user.email.split('@')[0];
+                document.getElementById('header-user-btn').href = user.role === 'gestao' ? 'gestao.html' : 'login.html';
+            }
+        }
+
+        function updateBookingsBadge() {
+            const user = getCurrentUser();
+            if (!user) return;
+            const today = new Date().toISOString().split('T')[0];
+            const active = getBookings().filter(b => b.date >= today && b.clientEmail === user.email);
+            if (active.length > 0) {
+                document.getElementById('active-bookings-badge').style.display = 'inline-flex';
+                document.getElementById('active-bookings-count').textContent = `${active.length} agendamento${active.length > 1 ? 's' : ''} ativo${active.length > 1 ? 's' : ''}`;
+            }
+        }
+
+        // ===== CALENDÁRIO =====
+        function changeMonth(delta) {
+            currentMonth += delta;
+            if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+            if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            document.getElementById('calendar-month-label').textContent = `${MONTHS[currentMonth]} ${currentYear}`;
+
+            const grid = document.getElementById('calendar-grid');
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const prevMonthDays = new Date(currentYear, currentMonth, 0).getDate();
+
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            const bookings = getBookings();
+            const bookedDates = new Set(bookings.map(b => b.date));
+
+            let html = '';
+
+            // Dias do mês anterior
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const day = prevMonthDays - i;
+                html += `<div class="calendar-day other-month">${day}</div>`;
+            }
+
+            // Dias do mês atual
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateObj = new Date(currentYear, currentMonth, d);
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const isSunday = dateObj.getDay() === 0;
+                const isPast = dateStr < todayStr;
+                const isToday = dateStr === todayStr;
+                const hasBooking = bookedDates.has(dateStr);
+
+                let classes = 'calendar-day';
+                if (isToday) classes += ' today';
+                if (hasBooking) classes += ' has-booking';
+                if (isSunday || isPast) classes += ' disabled';
+
+                html += `<div class="${classes}" ${!isSunday && !isPast ? `onclick="openDay('${dateStr}')"` : ''}>${d}</div>`;
+            }
+
+            // Dias do próximo mês
+            const totalCells = firstDay + daysInMonth;
+            const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+            for (let i = 1; i <= remaining; i++) {
+                html += `<div class="calendar-day other-month">${i}</div>`;
+            }
+
+            grid.innerHTML = html;
+        }
+
+        // ===== DETALHES DO DIA (horários) =====
+        function openDay(dateStr) {
+            selectedDate = dateStr;
+            selectedTime = null;
+            selectedService = null;
+
+            // Highlight no calendário
+            document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
+            const allDays = document.querySelectorAll('.calendar-day:not(.other-month):not(.disabled)');
+            const dayNum = parseInt(dateStr.split('-')[2]);
+            allDays.forEach(d => {
+                if (parseInt(d.textContent) === dayNum) d.classList.add('selected');
+            });
+
+            const date = new Date(dateStr + 'T12:00:00');
+            const label = date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+            document.getElementById('day-sheet-title').textContent = label.charAt(0).toUpperCase() + label.slice(1);
+
+            const bookings = getBookings();
+            const services = getServices();
+            const slots = generateTimeSlots();
+
+            const grid = document.getElementById('day-time-grid');
+            grid.innerHTML = slots.map(slot => {
+                const blocked = isSlotFullyBlocked(dateStr, slot, bookings, services);
+                return `<button class="time-slot ${blocked ? 'disabled' : ''}"
+                    ${!blocked ? `onclick="openTimeServices('${slot}')"` : ''}>${slot}</button>`;
+            }).join('');
+
+            openModal('day-overlay', 'day-sheet');
+        }
+
+        function closeDayModal() {
+            closeModal('day-overlay', 'day-sheet');
+        }
+
+        function generateTimeSlots() {
+            const slots = [];
+            for (let h = 8; h <= 17; h++) {
+                slots.push(`${String(h).padStart(2,'0')}:00`);
+                if (h < 17) slots.push(`${String(h).padStart(2,'0')}:30`);
+            }
+            // Remove horário de almoço
+            return slots.filter(s => {
+                const m = timeToMin(s);
+                return m < 12 * 60 || m >= 13 * 60;
+            });
+        }
+
+        // ===== SERVIÇOS PARA O HORÁRIO =====
+        function openTimeServices(time) {
+            selectedTime = time;
+            closeDayModal();
+
+            const date = new Date(selectedDate + 'T12:00:00');
+            const dayLabel = date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
+
+            document.getElementById('svc-sheet-title').textContent = `Serviços às ${time}`;
+            document.getElementById('svc-sheet-subtitle').textContent = `${dayLabel} — Selecione o serviço desejado`;
+
+            const services = getServices();
+            const bookings = getBookings();
+            const allServices = getServices();
+
+            const container = document.getElementById('svc-options-list');
+            container.innerHTML = services.map(svc => {
+                const reason = getUnavailableReason(selectedDate, time, svc, bookings, allServices);
+                const available = !reason;
+
+                return `
+                    <div class="service-option ${available ? '' : 'unavailable'}"
+                         ${available ? `onclick="selectServiceForBooking('${svc.id}')"` : ''}>
+                        <div class="service-option-icon">
+                            <i class="fas ${available ? 'fa-spa' : 'fa-ban'}"></i>
+                        </div>
+                        <div class="service-option-info">
+                            <div class="service-option-name">${svc.name}</div>
+                            <div class="service-option-meta"><i class="far fa-clock"></i> ${svc.duration} min</div>
+                            ${!available ? `<div class="service-option-reason"><i class="fas fa-info-circle"></i> ${reason}</div>` : ''}
+                        </div>
+                        <div class="service-option-price">R$ ${fmtPrice(svc.price)}</div>
+                    </div>`;
+            }).join('');
+
+            setTimeout(() => openModal('svc-overlay', 'svc-sheet'), 200);
+        }
+
+        function closeSvcModal() {
+            closeModal('svc-overlay', 'svc-sheet');
+        }
+
+        // ===== CONFIRMAR / LOGIN =====
+        function selectServiceForBooking(svcId) {
+            const services = getServices();
+            selectedService = services.find(s => s.id === svcId);
+            if (!selectedService) return;
+            closeSvcModal();
+
+            const user = getCurrentUser();
+
+            if (user) {
+                showConfirmation(user);
+            } else {
+                showLoginPrompt();
+            }
+        }
+
+        function showLoginPrompt() {
+            const content = document.getElementById('confirm-content');
+            content.innerHTML = `
+                <div class="text-center">
+                    <i class="far fa-user-circle" style="font-size: 3rem; color: var(--brand-400); margin-bottom: 12px;"></i>
+                    <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-dark); margin-bottom: 6px;">Faça login para agendar</h3>
+                    <p class="text-sm text-muted mb-24">Você precisa estar logada para confirmar um agendamento.</p>
+
+                    <div class="card mb-16" style="text-align: left; background: var(--bg-app);">
+                        <p class="text-xs text-muted mb-4">Resumo do agendamento:</p>
+                        <p class="text-sm fw-600">${selectedService.name}</p>
+                        <p class="text-xs text-muted">${formatDateBR(selectedDate)} às ${selectedTime}</p>
+                        <p class="text-sm fw-700 mt-4" style="color: var(--accent);">R$ ${fmtPrice(selectedService.price)}</p>
+                    </div>
+
+                    <a href="login.html" class="btn btn-primary btn-full btn-lg mb-12">
+                        <i class="fas fa-sign-in-alt"></i> Fazer Login
+                    </a>
+                    <a href="login.html" class="btn btn-outline btn-full">
+                        <i class="fas fa-user-plus"></i> Criar Conta
+                    </a>
+                    <button class="btn btn-ghost btn-full mt-8" onclick="closeConfirmModal()" style="color: var(--text-muted);">Voltar</button>
+                </div>`;
+            setTimeout(() => openModal('confirm-overlay', 'confirm-sheet'), 200);
+        }
+
+        function showConfirmation(user) {
+            const dateLabel = formatDateBR(selectedDate);
+            const content = document.getElementById('confirm-content');
+            content.innerHTML = `
+                <div class="text-center">
+                    <i class="far fa-calendar-check" style="font-size: 3rem; color: var(--accent); margin-bottom: 12px;"></i>
+                    <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-dark); margin-bottom: 6px;">Confirmar Agendamento?</h3>
+                    <p class="text-sm text-muted mb-16">Revise os detalhes abaixo:</p>
+
+                    <div class="card mb-24" style="text-align: left;">
+                        <div class="flex items-center gap-12 mb-12">
+                            <div class="service-option-icon"><i class="fas fa-spa"></i></div>
+                            <div>
+                                <p class="fw-600" style="font-size: 0.9rem;">${selectedService.name}</p>
+                                <p class="text-xs text-muted">${selectedService.duration} min</p>
+                            </div>
+                        </div>
+                        <div style="border-top: 1px solid var(--border-light); padding-top: 12px;">
+                            <div class="flex justify-between mb-8">
+                                <span class="text-sm text-muted">Data</span>
+                                <span class="text-sm fw-600">${dateLabel}</span>
+                            </div>
+                            <div class="flex justify-between mb-8">
+                                <span class="text-sm text-muted">Horário</span>
+                                <span class="text-sm fw-600">${selectedTime}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-muted">Valor</span>
+                                <span class="text-sm fw-700" style="color: var(--accent);">R$ ${fmtPrice(selectedService.price)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="text-align: left;">
+                        <label class="form-label">Telefone para contato (WhatsApp)</label>
+                        <input type="tel" class="form-control" id="confirm-phone" placeholder="(00) 00000-0000" value="${user.phone || ''}">
+                    </div>
+
+                    <button class="btn btn-primary btn-full btn-lg" onclick="finalizeBooking()">
+                        <i class="fas fa-check"></i> Confirmar Agendamento
+                    </button>
+                    <button class="btn btn-ghost btn-full mt-8" onclick="closeConfirmModal()" style="color: var(--text-muted);">Cancelar</button>
+                </div>`;
+            setTimeout(() => {
+                openModal('confirm-overlay', 'confirm-sheet');
+                // Máscara no telefone do modal
+                const phoneEl = document.getElementById('confirm-phone');
+                if (phoneEl) {
+                    phoneEl.addEventListener('input', function(e) {
+                        let v = e.target.value.replace(/\D/g, '').slice(0, 11);
+                        if (v.length > 6) v = '(' + v.slice(0,2) + ') ' + v.slice(2,7) + '-' + v.slice(7);
+                        else if (v.length > 2) v = '(' + v.slice(0,2) + ') ' + v.slice(2);
+                        else if (v.length > 0) v = '(' + v;
+                        e.target.value = v;
+                    });
+                }
+            }, 200);
+        }
+
+        function finalizeBooking() {
+            const user = getCurrentUser();
+            const phone = document.getElementById('confirm-phone').value.trim();
+            if (!phone || phone.length < 10) {
+                showToast('Informe seu telefone para contato', 'error');
+                return;
+            }
+
+            const booking = {
+                id: Date.now().toString(),
+                serviceId: selectedService.id,
+                serviceName: selectedService.name,
+                date: selectedDate,
+                time: selectedTime,
+                duration: selectedService.duration,
+                prepTime: selectedService.prepTime || 0,
+                clientName: user.name || user.email.split('@')[0],
+                clientEmail: user.email,
+                clientPhone: phone,
+                status: 'confirmado'
+            };
+
+            const bookings = getBookings();
+            bookings.push(booking);
+            localStorage.setItem('poar_bookings', JSON.stringify(bookings));
+
+            closeConfirmModal();
+
+            // Mostra sucesso
+            const content = document.getElementById('confirm-content');
+            content.innerHTML = `
+                <div class="text-center">
+                    <i class="fas fa-check-circle" style="font-size: 3.5rem; color: var(--success); margin-bottom: 16px;"></i>
+                    <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-dark); margin-bottom: 6px;">Agendamento Confirmado!</h3>
+                    <p class="text-sm text-muted mb-24">Você receberá uma confirmação por WhatsApp.</p>
+                    <div class="card mb-24" style="text-align: left;">
+                        <p class="text-sm"><strong>Serviço:</strong> ${selectedService.name}</p>
+                        <p class="text-sm mt-8"><strong>Data:</strong> ${formatDateBR(selectedDate)}</p>
+                        <p class="text-sm mt-8"><strong>Horário:</strong> ${selectedTime}</p>
+                        <p class="text-sm mt-8"><strong>Valor:</strong> R$ ${fmtPrice(selectedService.price)}</p>
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="closeConfirmModal(); renderCalendar(); updateBookingsBadge();">Fechar</button>
+                </div>`;
+            setTimeout(() => openModal('confirm-overlay', 'confirm-sheet'), 100);
+            showToast('Agendamento realizado!', 'success');
+        }
+
+        function closeConfirmModal() {
+            closeModal('confirm-overlay', 'confirm-sheet');
+        }
+    </script>
+</body>
+</html>
