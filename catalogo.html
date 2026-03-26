@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo - Poar Estética</title>
+    <title>Catalogo - Poar Estetica</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -12,15 +12,12 @@
         <header class="top-header">
             <a href="index.html" class="header-brand">
                 <div class="header-logo">P</div>
-                <div>
-                    <h1 class="header-title">Poar</h1>
-                    <p class="header-subtitle">Estética</p>
-                </div>
+                <div><h1 class="header-title">Poar</h1><p class="header-subtitle">Estetica</p></div>
             </a>
             <nav class="desktop-nav">
-                <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Início</a>
+                <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Inicio</a>
                 <a href="agendar.html" class="nav-link"><i class="far fa-calendar-plus"></i> Agendar</a>
-                <a href="catalogo.html" class="nav-link active"><i class="fas fa-th-large"></i> Catálogo</a>
+                <a href="catalogo.html" class="nav-link active"><i class="fas fa-th-large"></i> Catalogo</a>
             </nav>
             <div class="header-actions">
                 <a href="login.html" class="header-link" id="header-user-btn"><i class="far fa-user"></i><span id="header-user-name">Entrar</span></a>
@@ -28,19 +25,27 @@
         </header>
 
         <main class="main-content">
-            <!-- Barra de busca -->
-            <div class="section" style="padding-top: 16px; padding-bottom: 0;">
+            <!-- Busca -->
+            <div class="section" style="padding-top:16px; padding-bottom:0;">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" class="form-control" id="search-input" placeholder="Buscar serviços e produtos..." oninput="handleSearch()">
+                    <input type="text" class="form-control" id="search-input" placeholder="Buscar servicos e produtos..." oninput="handleSearch()">
                 </div>
             </div>
 
             <!-- Filtros -->
             <div class="filter-row" id="catalog-filters">
                 <button class="chip active" onclick="filterCatalog('todos', this)">Todos</button>
-                <button class="chip" onclick="filterCatalog('servicos', this)"><i class="fas fa-spa"></i> Serviços</button>
+                <button class="chip" onclick="filterCatalog('servicos', this)"><i class="fas fa-spa"></i> Servicos</button>
                 <button class="chip" onclick="filterCatalog('produtos', this)"><i class="fas fa-pump-soap"></i> Produtos</button>
+            </div>
+
+            <!-- Promocoes do cliente -->
+            <div class="section hidden" id="catalog-promo-section" style="padding-bottom:0;">
+                <div class="section-header">
+                    <h3 class="section-title"><i class="fas fa-gift" style="color:var(--warning);"></i> Promocoes para voce</h3>
+                </div>
+                <div id="catalog-promotions" style="padding:0 20px;"></div>
             </div>
 
             <!-- Grid -->
@@ -52,47 +57,90 @@
                 <button class="btn btn-ghost mt-12" onclick="clearSearch()">Limpar busca</button>
             </div>
 
-            <div style="height: 32px;"></div>
+            <div style="height:32px;"></div>
         </main>
 
-        <!-- Bottom Sheet Detalhes -->
+        <!-- Detail bottom-sheet -->
         <div class="modal-overlay" id="detail-overlay" onclick="closeDetail()"></div>
         <div class="bottom-sheet" id="detail-sheet">
             <div class="bottom-sheet-handle"></div>
             <div id="detail-content"></div>
         </div>
 
+        <!-- Admin edit bottom-sheet -->
+        <div class="modal-overlay" id="edit-overlay" onclick="closeEdit()"></div>
+        <div class="bottom-sheet" id="edit-sheet">
+            <div class="bottom-sheet-handle"></div>
+            <div id="edit-content"></div>
+        </div>
+
+        <!-- Login prompt modal -->
+        <div class="modal-overlay" id="login-overlay" onclick="closeLoginPrompt()"></div>
+        <div class="bottom-sheet" id="login-sheet">
+            <div class="bottom-sheet-handle"></div>
+            <div style="padding:24px 20px;text-align:center;">
+                <div style="width:56px;height:56px;border-radius:50%;background:var(--accent-light);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                    <i class="fas fa-user-lock" style="font-size:1.3rem;color:var(--accent);"></i>
+                </div>
+                <h3 style="font-size:1.1rem;font-weight:700;color:var(--text-dark);margin-bottom:8px;">Faca login para continuar</h3>
+                <p class="text-sm text-muted">Voce precisa estar logado para realizar compras.</p>
+                <a href="login.html" class="btn btn-primary btn-full btn-lg mt-16"><i class="fas fa-sign-in-alt"></i> Entrar na conta</a>
+                <button class="btn btn-ghost btn-full mt-8" onclick="closeLoginPrompt()" style="color:var(--text-muted);">Voltar</button>
+            </div>
+        </div>
+
         <nav class="bottom-nav">
-            <a href="index.html" class="nav-btn"><i class="fas fa-home"></i><span>Início</span></a>
+            <a href="index.html" class="nav-btn"><i class="fas fa-home"></i><span>Inicio</span></a>
             <a href="agendar.html" class="nav-btn"><i class="far fa-calendar-plus"></i><span>Agendar</span></a>
-            <a href="catalogo.html" class="nav-btn active"><i class="fas fa-th-large"></i><span>Catálogo</span></a>
+            <a href="catalogo.html" class="nav-btn active"><i class="fas fa-th-large"></i><span>Catalogo</span></a>
             <a href="login.html" class="nav-btn"><i class="far fa-user"></i><span>Entrar</span></a>
         </nav>
     </div>
 
     <div class="toast" id="toast"></div>
 
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+    <script src="firebase-config.js"></script>
     <script src="app.js"></script>
     <script>
         let currentFilter = 'todos';
         let searchQuery = '';
+        let allServices = [];
+        let allProducts = [];
+        let allPromotions = [];
+        let detailQty = 1;
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('catalog-grid').innerHTML = skeletonCatalogGrid(6);
+
+            await initAuth();
+            updateNavState();
+
+            try {
+                [allServices, allProducts, allPromotions] = await Promise.all([
+                    getServices(), getProducts(), getPromotions()
+                ]);
+            } catch(e) { console.error(e); }
+
             renderCatalog();
-            updateHeaderUser();
+
+            if (isLoggedIn() && !isAdmin() && allPromotions.length > 0) {
+                document.getElementById('catalog-promo-section').classList.remove('hidden');
+                await renderClientPromotions(
+                    document.getElementById('catalog-promotions'),
+                    getProfile().email
+                );
+            }
+
             if (window.location.hash === '#produtos') {
                 filterCatalog('produtos', document.querySelectorAll('#catalog-filters .chip')[2]);
             }
         });
 
-        function updateHeaderUser() {
-            const user = getCurrentUser();
-            if (user) {
-                document.getElementById('header-user-name').textContent = user.name || user.email.split('@')[0];
-                document.getElementById('header-user-btn').href = user.role === 'gestao' ? 'gestao.html' : 'login.html';
-            }
-        }
-
+        /* ========== FILTER & SEARCH ========== */
         function filterCatalog(filter, btn) {
             currentFilter = filter;
             document.querySelectorAll('#catalog-filters .chip').forEach(c => c.classList.remove('active'));
@@ -111,21 +159,35 @@
             renderCatalog();
         }
 
+        /* ========== STOCK BADGE HELPER ========== */
+        function getStockBadge(product) {
+            if (product.stockType === 'requisicao') {
+                return '<span class="stock-badge stock-request"><i class="fas fa-truck"></i> Sob encomenda</span>';
+            }
+            const qty = product.stockQuantity || 0;
+            const alert = product.stockAlert || 0;
+            if (qty <= 0) {
+                return '<span class="stock-badge stock-out"><i class="fas fa-times-circle"></i> Esgotado</span>';
+            }
+            if (qty <= alert) {
+                return '<span class="stock-badge stock-low"><i class="fas fa-exclamation-triangle"></i> Poucas unidades</span>';
+            }
+            return '<span class="stock-badge stock-ok"><i class="fas fa-check-circle"></i> Em estoque</span>';
+        }
+
+        /* ========== RENDER CATALOG GRID ========== */
         function renderCatalog() {
-            const services = getServices();
-            const products = getProducts();
             const grid = document.getElementById('catalog-grid');
             const empty = document.getElementById('catalog-empty');
 
             let items = [];
             if (currentFilter === 'todos' || currentFilter === 'servicos') {
-                services.forEach(s => items.push({ ...s, type: 'servico' }));
+                allServices.forEach(s => items.push({ ...s, type: 'servico' }));
             }
             if (currentFilter === 'todos' || currentFilter === 'produtos') {
-                products.forEach(p => items.push({ ...p, type: 'produto' }));
+                allProducts.forEach(p => items.push({ ...p, type: 'produto' }));
             }
 
-            // Filtro de busca
             if (searchQuery) {
                 items = items.filter(i =>
                     i.name.toLowerCase().includes(searchQuery) ||
@@ -138,52 +200,366 @@
                 empty.classList.remove('hidden');
                 return;
             }
-
             empty.classList.add('hidden');
+            grid.classList.add('stagger-in');
+
             grid.innerHTML = items.map(item => {
-                const img = item.image || placeholderImg(item.type);
-                const isService = item.type === 'servico';
-                return `
-                    <div class="catalog-card" onclick="showDetail('${item.id}', '${item.type}')">
-                        <img src="${img}" alt="${item.name}" class="catalog-card-img" loading="lazy">
-                        <div class="catalog-card-body">
-                            <p class="catalog-card-name">${item.name}</p>
-                            <p class="catalog-card-desc">${item.description || (isService ? 'Serviço profissional' : 'Produto de qualidade')}</p>
-                            <div class="catalog-card-footer">
-                                <span class="catalog-card-price">R$ ${fmtPrice(item.price)}</span>
-                                ${isService ? `<span class="catalog-card-time"><i class="far fa-clock"></i> ${item.duration}min</span>` : ''}
-                            </div>
-                        </div>
-                    </div>`;
+                const img = item.image || (item.type === 'servico'
+                    ? 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop'
+                    : 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=300&fit=crop');
+                const isSvc = item.type === 'servico';
+                const promo = allPromotions.find(p => p.targetId === item.id);
+
+                let badges = '';
+                if (promo) {
+                    badges += '<div style="position:absolute;top:6px;left:6px;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;padding:3px 8px;border-radius:10px;font-size:0.55rem;font-weight:700;"><i class="fas fa-gift"></i> Promocao</div>';
+                }
+                if (!isSvc) {
+                    badges += '<div style="position:absolute;bottom:6px;left:6px;">' + getStockBadge(item) + '</div>';
+                }
+                if (isAdmin()) {
+                    badges += '<button class="edit-badge" onclick="event.stopPropagation(); openEditModal(\'' + item.id + '\',\'' + item.type + '\')" title="Editar"><i class="fas fa-pen"></i></button>';
+                }
+
+                return '<div class="catalog-card" onclick="showDetail(\'' + item.id + '\', \'' + item.type + '\')">' +
+                    '<div style="position:relative;">' +
+                        '<img src="' + img + '" alt="' + item.name + '" class="catalog-card-img" loading="lazy">' +
+                        badges +
+                    '</div>' +
+                    '<div class="catalog-card-body">' +
+                        '<p class="catalog-card-name">' + item.name + '</p>' +
+                        '<p class="catalog-card-desc">' + (item.description || '') + '</p>' +
+                        '<div class="catalog-card-footer">' +
+                            '<span class="catalog-card-price">R$ ' + fmtPrice(item.price) + '</span>' +
+                            (isSvc ? '<span class="catalog-card-time"><i class="far fa-clock"></i> ' + item.duration + 'min</span>' : '') +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
             }).join('');
         }
 
-        function showDetail(id, type) {
-            const items = type === 'servico' ? getServices() : getProducts();
+        /* ========== DETAIL BOTTOM-SHEET ========== */
+        async function showDetail(id, type) {
+            const items = type === 'servico' ? allServices : allProducts;
             const item = items.find(i => i.id === id);
             if (!item) return;
 
-            const isService = type === 'servico';
-            const img = item.image || placeholderImg(type);
+            detailQty = 1;
+            const isSvc = type === 'servico';
+            const img = item.image || (isSvc
+                ? 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop'
+                : 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=300&fit=crop');
 
-            document.getElementById('detail-content').innerHTML = `
-                <img src="${img}" alt="${item.name}" style="width:100%; height:200px; object-fit:cover; border-radius: var(--r-md); margin-bottom: 16px;">
-                <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-dark);">${item.name}</h3>
-                <p class="text-sm text-muted mt-8">${item.description || (isService ? 'Tratamento profissional realizado com produtos de alta qualidade.' : 'Produto selecionado para os melhores resultados.')}</p>
-                <div class="flex justify-between items-center mt-16">
-                    <span style="font-size: 1.3rem; font-weight: 800; color: var(--accent);">R$ ${fmtPrice(item.price)}</span>
-                    ${isService ? `<span class="text-sm text-muted"><i class="far fa-clock"></i> ${item.duration} min</span>` : ''}
-                </div>
-                ${isService ? `<a href="agendar.html" class="btn btn-primary btn-full mt-16 btn-lg"><i class="far fa-calendar-plus"></i> Agendar este serviço</a>` : ''}
-                <button class="btn btn-ghost btn-full mt-8" onclick="closeDetail()" style="color:var(--text-muted);">Fechar</button>
-            `;
+            const promo = allPromotions.find(p => p.targetId === id);
+            let promoHtml = '';
+            if (promo && isLoggedIn() && !isAdmin()) {
+                const count = await getClientPromotionProgress(getProfile().email, id, type);
+                const required = promo.requiredCount || 5;
+                const progress = count % (required + (promo.freeCount || 1));
+                const pct = Math.round((Math.min(progress, required) / required) * 100);
+                const remaining = Math.max(0, required - progress);
+                promoHtml =
+                    '<div class="promo-card mt-16">' +
+                        '<div class="promo-header">' +
+                            '<div class="promo-icon"><i class="fas fa-gift"></i></div>' +
+                            '<div class="promo-info">' +
+                                '<h4 class="promo-title">' + (promo.description || ('Agende ' + required + 'x e ganhe ' + (promo.freeCount || 1) + ' gratis!')) + '</h4>' +
+                                '<p class="promo-desc">' + (remaining > 0 ? ('Falta' + (remaining > 1 ? 'm' : '') + ' ' + remaining + ' para ganhar!') : 'Resgate disponivel!') + '</p>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="promo-progress">' +
+                            '<div class="promo-bar"><div class="promo-bar-fill" style="width:' + pct + '%"></div></div>' +
+                            '<div class="promo-stats"><span>' + progress + ' de ' + required + '</span><span>' + pct + '%</span></div>' +
+                        '</div>' +
+                    '</div>';
+            }
+
+            let stockInfoHtml = '';
+            let actionHtml = '';
+
+            if (isSvc) {
+                actionHtml =
+                    '<a href="agendar.html" class="btn btn-primary btn-full mt-16 btn-lg"><i class="far fa-calendar-plus"></i> Agendar este servico</a>';
+            } else {
+                const isOutOfStock = item.stockType === 'quantidade' && (item.stockQuantity || 0) <= 0;
+                const isRequest = item.stockType === 'requisicao';
+                const maxQty = isRequest ? 99 : (item.stockQuantity || 0);
+
+                stockInfoHtml = '<div class="mt-12">' + getStockBadge(item) + '</div>';
+
+                if (isRequest && item.deliveryTime) {
+                    stockInfoHtml += '<p class="text-sm text-muted mt-8"><i class="fas fa-truck"></i> Prazo de entrega: ' + item.deliveryTime + '</p>';
+                }
+
+                if (isOutOfStock) {
+                    actionHtml =
+                        '<button class="btn btn-primary btn-full mt-16 btn-lg" disabled><i class="fas fa-ban"></i> Produto esgotado</button>';
+                } else {
+                    actionHtml =
+                        '<div class="flex justify-between items-center mt-16">' +
+                            '<span class="text-sm" style="font-weight:600;color:var(--text-dark);">Quantidade:</span>' +
+                            '<div class="qty-selector">' +
+                                '<button class="qty-btn" onclick="changeQty(-1, ' + maxQty + ')">-</button>' +
+                                '<span class="qty-value" id="detail-qty-value">1</span>' +
+                                '<button class="qty-btn" onclick="changeQty(1, ' + maxQty + ')">+</button>' +
+                            '</div>' +
+                        '</div>' +
+                        '<button class="btn btn-primary btn-full mt-16 btn-lg" id="buy-btn" onclick="handleBuy(\'' + id + '\')">' +
+                            '<i class="fas fa-shopping-bag"></i> Comprar' +
+                        '</button>';
+                }
+            }
+
+            document.getElementById('detail-content').innerHTML =
+                '<img src="' + img + '" alt="' + item.name + '" style="width:100%;height:200px;object-fit:cover;border-radius:var(--r-md);margin-bottom:16px;">' +
+                '<h3 style="font-size:1.15rem;font-weight:700;color:var(--text-dark);">' + item.name + '</h3>' +
+                '<p class="text-sm text-muted mt-8">' + (item.description || (isSvc ? 'Tratamento profissional realizado com produtos de alta qualidade.' : 'Produto selecionado para os melhores resultados.')) + '</p>' +
+                '<div class="flex justify-between items-center mt-16">' +
+                    '<span style="font-size:1.3rem;font-weight:800;color:var(--accent);">R$ ' + fmtPrice(item.price) + '</span>' +
+                    (isSvc ? '<span class="text-sm text-muted"><i class="far fa-clock"></i> ' + item.duration + ' min</span>' : '') +
+                '</div>' +
+                stockInfoHtml +
+                promoHtml +
+                actionHtml +
+                '<button class="btn btn-ghost btn-full mt-8" onclick="closeDetail()" style="color:var(--text-muted);">Fechar</button>';
 
             openModal('detail-overlay', 'detail-sheet');
         }
 
-        function closeDetail() {
-            closeModal('detail-overlay', 'detail-sheet');
+        function changeQty(delta, max) {
+            detailQty = Math.max(1, Math.min(detailQty + delta, max));
+            const el = document.getElementById('detail-qty-value');
+            if (el) el.textContent = detailQty;
         }
+
+        async function handleBuy(productId) {
+            if (!isLoggedIn()) {
+                closeDetail();
+                setTimeout(function() { openModal('login-overlay', 'login-sheet'); }, 300);
+                return;
+            }
+
+            const product = allProducts.find(function(p) { return p.id === productId; });
+            if (!product) return;
+
+            const btn = document.getElementById('buy-btn');
+            btnLoading(btn, true);
+
+            try {
+                const profile = getProfile();
+                await addProductOrder({
+                    productId: product.id,
+                    productName: product.name,
+                    quantity: detailQty,
+                    unitPrice: product.price,
+                    totalPrice: product.price * detailQty,
+                    clientName: profile.name || '',
+                    clientEmail: profile.email,
+                    clientPhone: profile.phone || '',
+                    clientUid: profile.uid,
+                    deliveryTime: product.stockType === 'requisicao' ? (product.deliveryTime || '') : ''
+                });
+
+                if (product.stockType === 'quantidade') {
+                    const newQty = Math.max(0, (product.stockQuantity || 0) - detailQty);
+                    await updateProduct(productId, { stockQuantity: newQty });
+                    const idx = allProducts.findIndex(function(p) { return p.id === productId; });
+                    if (idx >= 0) allProducts[idx].stockQuantity = newQty;
+                }
+
+                btnLoading(btn, false);
+                closeDetail();
+                showToast('Pedido realizado com sucesso!', 'success');
+                renderCatalog();
+            } catch(e) {
+                btnLoading(btn, false);
+                console.error(e);
+                showToast('Erro ao realizar pedido. Tente novamente.', 'error');
+            }
+        }
+
+        function closeDetail() { closeModal('detail-overlay', 'detail-sheet'); }
+        function closeLoginPrompt() { closeModal('login-overlay', 'login-sheet'); }
+
+        /* ========== ADMIN EDIT MODAL ========== */
+        function openEditModal(id, type) {
+            const items = type === 'servico' ? allServices : allProducts;
+            const item = items.find(function(i) { return i.id === id; });
+            if (!item) return;
+
+            const isSvc = type === 'servico';
+            const img = item.image || (isSvc
+                ? 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop'
+                : 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=300&fit=crop');
+
+            let fieldsHtml = '';
+
+            fieldsHtml +=
+                '<div class="edit-modal-preview">' +
+                    '<img src="' + img + '" alt="' + item.name + '" id="edit-preview-img">' +
+                    '<button class="edit-badge" onclick="changeEditImage(\'' + id + '\',\'' + type + '\')" title="Alterar imagem"><i class="fas fa-camera"></i></button>' +
+                '</div>';
+
+            fieldsHtml +=
+                '<div class="form-group">' +
+                    '<label class="form-label">Nome</label>' +
+                    '<input type="text" class="form-control" id="edit-name" value="' + (item.name || '') + '">' +
+                '</div>' +
+                '<div class="form-group">' +
+                    '<label class="form-label">Descricao</label>' +
+                    '<textarea class="form-control" id="edit-description" rows="3">' + (item.description || '') + '</textarea>' +
+                '</div>' +
+                '<div class="form-group">' +
+                    '<label class="form-label">Preco (R$)</label>' +
+                    '<input type="number" class="form-control" id="edit-price" step="0.01" min="0" value="' + (item.price || 0) + '">' +
+                '</div>';
+
+            if (isSvc) {
+                fieldsHtml +=
+                    '<div class="form-row">' +
+                        '<div class="form-group">' +
+                            '<label class="form-label">Duracao (min)</label>' +
+                            '<input type="number" class="form-control" id="edit-duration" min="1" value="' + (item.duration || 30) + '">' +
+                        '</div>' +
+                        '<div class="form-group">' +
+                            '<label class="form-label">Preparacao (min)</label>' +
+                            '<input type="number" class="form-control" id="edit-prepTime" min="0" value="' + (item.prepTime || 0) + '">' +
+                        '</div>' +
+                    '</div>';
+            } else {
+                const isReq = item.stockType === 'requisicao';
+                fieldsHtml +=
+                    '<div class="form-group">' +
+                        '<label class="form-label">Tipo de estoque</label>' +
+                        '<div style="display:flex;gap:8px;">' +
+                            '<button class="chip ' + (!isReq ? 'active' : '') + '" id="edit-stock-qty-btn" onclick="toggleStockType(\'quantidade\')"><i class="fas fa-boxes"></i> Quantidade</button>' +
+                            '<button class="chip ' + (isReq ? 'active' : '') + '" id="edit-stock-req-btn" onclick="toggleStockType(\'requisicao\')"><i class="fas fa-truck"></i> Sob encomenda</button>' +
+                        '</div>' +
+                        '<input type="hidden" id="edit-stockType" value="' + (item.stockType || 'quantidade') + '">' +
+                    '</div>' +
+                    '<div id="edit-stock-qty-fields" class="' + (isReq ? 'hidden' : '') + '">' +
+                        '<div class="form-row">' +
+                            '<div class="form-group">' +
+                                '<label class="form-label">Quantidade em estoque</label>' +
+                                '<input type="number" class="form-control" id="edit-stockQuantity" min="0" value="' + (item.stockQuantity || 0) + '">' +
+                            '</div>' +
+                            '<div class="form-group">' +
+                                '<label class="form-label">Alerta de estoque baixo</label>' +
+                                '<input type="number" class="form-control" id="edit-stockAlert" min="0" value="' + (item.stockAlert || 0) + '">' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div id="edit-stock-req-fields" class="' + (!isReq ? 'hidden' : '') + '">' +
+                        '<div class="form-group">' +
+                            '<label class="form-label">Prazo de entrega</label>' +
+                            '<input type="text" class="form-control" id="edit-deliveryTime" placeholder="Ex: 3 a 5 dias uteis" value="' + (item.deliveryTime || '') + '">' +
+                        '</div>' +
+                    '</div>';
+            }
+
+            fieldsHtml +=
+                '<button class="btn btn-primary btn-full btn-lg mt-16" id="edit-save-btn" onclick="saveEdit(\'' + id + '\',\'' + type + '\')">' +
+                    '<i class="fas fa-check"></i> Salvar alteracoes' +
+                '</button>' +
+                '<button class="btn btn-ghost btn-full mt-8" onclick="closeEdit()" style="color:var(--text-muted);">Cancelar</button>';
+
+            document.getElementById('edit-content').innerHTML =
+                '<h3 class="bottom-sheet-title" style="padding:0 0 16px;"><i class="fas fa-pen"></i> Editar ' + (isSvc ? 'servico' : 'produto') + '</h3>' +
+                fieldsHtml;
+
+            openModal('edit-overlay', 'edit-sheet');
+        }
+
+        function toggleStockType(type) {
+            document.getElementById('edit-stockType').value = type;
+            const qtyBtn = document.getElementById('edit-stock-qty-btn');
+            const reqBtn = document.getElementById('edit-stock-req-btn');
+            const qtyFields = document.getElementById('edit-stock-qty-fields');
+            const reqFields = document.getElementById('edit-stock-req-fields');
+
+            if (type === 'quantidade') {
+                qtyBtn.classList.add('active');
+                reqBtn.classList.remove('active');
+                qtyFields.classList.remove('hidden');
+                reqFields.classList.add('hidden');
+            } else {
+                qtyBtn.classList.remove('active');
+                reqBtn.classList.add('active');
+                qtyFields.classList.add('hidden');
+                reqFields.classList.remove('hidden');
+            }
+        }
+
+        async function changeEditImage(id, type) {
+            try {
+                showToast('Selecione uma imagem...', '');
+                const path = (type === 'servico' ? 'services' : 'products') + '/' + id + '_' + Date.now();
+                const url = await pickAndUploadImage(path);
+
+                var previewImg = document.getElementById('edit-preview-img');
+                if (previewImg) previewImg.src = url;
+
+                if (type === 'servico') {
+                    await updateService(id, { image: url });
+                    var sIdx = allServices.findIndex(function(s) { return s.id === id; });
+                    if (sIdx >= 0) allServices[sIdx].image = url;
+                } else {
+                    await updateProduct(id, { image: url });
+                    var pIdx = allProducts.findIndex(function(p) { return p.id === id; });
+                    if (pIdx >= 0) allProducts[pIdx].image = url;
+                }
+
+                showToast('Imagem atualizada!', 'success');
+                renderCatalog();
+            } catch(e) {
+                if (e.message !== 'Nenhum arquivo selecionado') showToast('Erro ao enviar imagem', 'error');
+            }
+        }
+
+        async function saveEdit(id, type) {
+            const btn = document.getElementById('edit-save-btn');
+            btnLoading(btn, true);
+
+            try {
+                const isSvc = type === 'servico';
+                var data = {
+                    name: document.getElementById('edit-name').value.trim(),
+                    description: document.getElementById('edit-description').value.trim(),
+                    price: parseFloat(document.getElementById('edit-price').value) || 0
+                };
+
+                if (isSvc) {
+                    data.duration = parseInt(document.getElementById('edit-duration').value) || 30;
+                    data.prepTime = parseInt(document.getElementById('edit-prepTime').value) || 0;
+                    await updateService(id, data);
+                    var sIdx = allServices.findIndex(function(s) { return s.id === id; });
+                    if (sIdx >= 0) Object.assign(allServices[sIdx], data);
+                } else {
+                    var stockType = document.getElementById('edit-stockType').value;
+                    data.stockType = stockType;
+                    if (stockType === 'quantidade') {
+                        data.stockQuantity = parseInt(document.getElementById('edit-stockQuantity').value) || 0;
+                        data.stockAlert = parseInt(document.getElementById('edit-stockAlert').value) || 0;
+                    } else {
+                        data.deliveryTime = document.getElementById('edit-deliveryTime').value.trim();
+                    }
+                    await updateProduct(id, data);
+                    var pIdx = allProducts.findIndex(function(p) { return p.id === id; });
+                    if (pIdx >= 0) Object.assign(allProducts[pIdx], data);
+                }
+
+                btnLoading(btn, false);
+                closeEdit();
+                showToast('Alteracoes salvas!', 'success');
+                renderCatalog();
+            } catch(e) {
+                btnLoading(btn, false);
+                console.error(e);
+                showToast('Erro ao salvar. Tente novamente.', 'error');
+            }
+        }
+
+        function closeEdit() { closeModal('edit-overlay', 'edit-sheet'); }
     </script>
 </body>
 </html>

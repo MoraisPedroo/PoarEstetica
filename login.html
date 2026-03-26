@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entrar - Poar Estética</title>
+    <title>Entrar - Poar Estetica</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -12,81 +12,83 @@
         <header class="top-header">
             <a href="index.html" class="header-brand">
                 <div class="header-logo">P</div>
-                <div>
-                    <h1 class="header-title">Poar</h1>
-                    <p class="header-subtitle">Estética</p>
-                </div>
+                <div><h1 class="header-title">Poar</h1><p class="header-subtitle">Estetica</p></div>
             </a>
             <nav class="desktop-nav">
-                <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Início</a>
+                <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Inicio</a>
                 <a href="agendar.html" class="nav-link"><i class="far fa-calendar-plus"></i> Agendar</a>
-                <a href="catalogo.html" class="nav-link"><i class="fas fa-th-large"></i> Catálogo</a>
+                <a href="catalogo.html" class="nav-link"><i class="fas fa-th-large"></i> Catalogo</a>
             </nav>
             <div class="header-actions">
-                <a href="login.html" class="header-link"><i class="far fa-user"></i><span>Entrar</span></a>
+                <a href="login.html" class="header-link" id="header-user-btn"><i class="far fa-user"></i><span id="header-user-name">Entrar</span></a>
             </div>
         </header>
 
-        <main class="main-content">
-            <!-- Se NÃO logado: formulário de login -->
-            <div class="login-page" id="login-page">
-                <div class="login-card">
+        <main class="main-content" id="main-area">
+            <!-- Loading state -->
+            <div class="page-loading" id="page-loader">
+                <div class="spinner"></div>
+                <p>Carregando...</p>
+            </div>
+
+            <!-- ===== LOGIN FORM ===== -->
+            <div class="login-page hidden" id="login-page">
+                <div class="login-card content-ready">
                     <div class="login-logo"><i class="fas fa-spa"></i></div>
                     <h2 class="login-title">Bem-vinda de volta</h2>
                     <p class="login-subtitle">Entre com seu e-mail para continuar</p>
 
-                    <form id="login-form" onsubmit="handleLogin(event)" style="text-align: left;">
-                        <div class="form-group">
-                            <label class="form-label" for="login-name">Nome</label>
-                            <input type="text" class="form-control" id="login-name" placeholder="Seu nome" required>
-                        </div>
+                    <form id="login-form" onsubmit="handleLogin(event)" style="text-align:left;">
                         <div class="form-group">
                             <label class="form-label" for="login-email">E-mail</label>
                             <input type="email" class="form-control" id="login-email" placeholder="seu@email.com" required autocomplete="email">
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="login-password">Senha</label>
-                            <input type="password" class="form-control" id="login-password" placeholder="Sua senha" required autocomplete="current-password" minlength="4">
+                            <input type="password" class="form-control" id="login-password" placeholder="Sua senha" required autocomplete="current-password" minlength="6">
                         </div>
-
-                        <div class="flex justify-between items-center mb-16">
-                            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-muted); cursor: pointer;">
-                                <input type="checkbox" id="remember-me"> Lembrar de mim
-                            </label>
-                            <a href="#" class="text-sm" style="color: var(--accent); font-weight: 600;" onclick="showToast('Em breve!'); return false;">Esqueci a senha</a>
-                        </div>
-
                         <button type="submit" class="btn btn-primary btn-full btn-lg" id="btn-login">
-                            Entrar
+                            <i class="fas fa-sign-in-alt"></i> Entrar
                         </button>
                     </form>
 
                     <div class="login-divider">ou</div>
 
-                    <button class="btn btn-outline btn-full" onclick="handleRegister()">
+                    <button class="btn btn-outline btn-full" onclick="openRegisterModal()">
                         <i class="fas fa-user-plus"></i> Criar conta
                     </button>
 
                     <p class="text-xs text-muted mt-16 text-center">
-                        <i class="fas fa-info-circle"></i> E-mails com <strong>@poar.com</strong> são reconhecidos automaticamente como gestão.
+                        <i class="fas fa-info-circle"></i> O e-mail <strong>admin@poar.com</strong> e reconhecido automaticamente como gestao.
                     </p>
                 </div>
             </div>
 
-            <!-- Se LOGADO: perfil simples -->
+            <!-- ===== PROFILE (when logged in) ===== -->
             <div class="login-page hidden" id="profile-page">
-                <div class="login-card">
-                    <div class="login-logo"><i class="fas fa-user-check"></i></div>
+                <div class="login-card content-ready" style="text-align:center;">
+                    <div class="profile-avatar-wrapper" id="avatar-wrapper">
+                        <img src="" alt="Foto de perfil" class="profile-avatar" id="profile-avatar" style="display:none;">
+                        <div class="login-logo" id="profile-avatar-fallback" style="width:80px;height:80px;font-size:1.8rem;"><i class="fas fa-user"></i></div>
+                        <button class="profile-avatar-edit" onclick="changeProfilePhoto()" title="Alterar foto"><i class="fas fa-camera"></i></button>
+                    </div>
                     <h2 class="login-title" id="profile-name"></h2>
-                    <p class="login-subtitle" id="profile-email"></p>
+                    <p class="login-subtitle" id="profile-email" style="margin-bottom:8px;"></p>
+                    <p class="text-xs text-muted mb-16" id="profile-phone"></p>
 
-                    <div class="card mb-16" style="text-align: left;" id="profile-bookings"></div>
+                    <button class="btn btn-outline btn-sm mb-16" onclick="openEditProfileModal()">
+                        <i class="fas fa-pen"></i> Editar perfil
+                    </button>
 
                     <div id="profile-gestao-link" class="hidden mb-16">
-                        <a href="gestao.html" class="btn btn-dark btn-full btn-lg">
-                            <i class="fas fa-cog"></i> Painel de Gestão
-                        </a>
+                        <a href="gestao.html" class="btn btn-dark btn-full btn-lg"><i class="fas fa-cog"></i> Painel de Gestao</a>
                     </div>
+
+                    <div class="card mb-16" style="text-align:left;" id="profile-bookings">
+                        <div class="page-loading" style="min-height:60px;"><div class="spinner"></div></div>
+                    </div>
+
+                    <div id="profile-promotions" class="mb-16"></div>
 
                     <button class="btn btn-outline btn-full" onclick="handleLogout()">
                         <i class="fas fa-sign-out-alt"></i> Sair da conta
@@ -95,161 +97,312 @@
             </div>
         </main>
 
+        <!-- ===== MODAL: Cadastro ===== -->
+        <div class="modal-overlay" id="register-overlay" onclick="closeRegisterModal()"></div>
+        <div class="bottom-sheet" id="register-sheet">
+            <div class="bottom-sheet-handle"></div>
+            <div class="flex items-center justify-between mb-16">
+                <h3 class="bottom-sheet-title" style="margin-bottom:0;">Criar Conta</h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeRegisterModal()" style="color:var(--text-muted);"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="register-form" onsubmit="handleRegister(event)" style="text-align:left;">
+                <div class="form-group">
+                    <label class="form-label">Nome completo</label>
+                    <input type="text" class="form-control" id="reg-name" placeholder="Seu nome" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">E-mail</label>
+                    <input type="email" class="form-control" id="reg-email" placeholder="seu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Senha</label>
+                    <input type="password" class="form-control" id="reg-password" placeholder="Minimo 6 caracteres" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Telefone (WhatsApp) <span class="text-xs text-muted">— opcional</span></label>
+                    <input type="tel" class="form-control" id="reg-phone" placeholder="(00) 00000-0000">
+                    <p class="form-hint">Se informar agora, ja preenchemos automaticamente nos agendamentos.</p>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full btn-lg" id="btn-register">
+                    <i class="fas fa-user-plus"></i> Criar conta
+                </button>
+            </form>
+        </div>
+
+        <!-- ===== MODAL: Editar Perfil ===== -->
+        <div class="modal-overlay" id="editprofile-overlay" onclick="closeEditProfileModal()"></div>
+        <div class="bottom-sheet" id="editprofile-sheet">
+            <div class="bottom-sheet-handle"></div>
+            <div class="flex items-center justify-between mb-16">
+                <h3 class="bottom-sheet-title" style="margin-bottom:0;">Editar Perfil</h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeEditProfileModal()" style="color:var(--text-muted);"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="editprofile-form" onsubmit="saveProfile(event)" style="text-align:left;">
+                <div class="form-group">
+                    <label class="form-label">Nome</label>
+                    <input type="text" class="form-control" id="edit-name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Telefone (WhatsApp)</label>
+                    <input type="tel" class="form-control" id="edit-phone">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full btn-lg" id="btn-save-profile">
+                    <i class="fas fa-save"></i> Salvar
+                </button>
+            </form>
+        </div>
+
         <nav class="bottom-nav">
-            <a href="index.html" class="nav-btn"><i class="fas fa-home"></i><span>Início</span></a>
+            <a href="index.html" class="nav-btn"><i class="fas fa-home"></i><span>Inicio</span></a>
             <a href="agendar.html" class="nav-btn"><i class="far fa-calendar-plus"></i><span>Agendar</span></a>
-            <a href="catalogo.html" class="nav-btn"><i class="fas fa-th-large"></i><span>Catálogo</span></a>
+            <a href="catalogo.html" class="nav-btn"><i class="fas fa-th-large"></i><span>Catalogo</span></a>
             <a href="login.html" class="nav-btn active"><i class="far fa-user"></i><span>Entrar</span></a>
         </nav>
     </div>
 
     <div class="toast" id="toast"></div>
 
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+    <script src="firebase-config.js"></script>
     <script src="app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const user = getCurrentUser();
+        document.addEventListener('DOMContentLoaded', async () => {
+            applyPhoneMask(document.getElementById('reg-phone'));
+            applyPhoneMask(document.getElementById('edit-phone'));
+
+            // Wait for auth to resolve
+            const user = await initAuth();
+            updateNavState();
+
+            // Hide loader
+            document.getElementById('page-loader').classList.add('hidden');
+
             if (user) {
-                showProfile(user);
+                // User is logged in — show profile immediately
+                showProfilePage(user);
+            } else {
+                // Not logged in — show login form
+                document.getElementById('login-page').classList.remove('hidden');
             }
         });
 
-        function showProfile(user) {
+        // ===== LOGIN =====
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            const btn = document.getElementById('btn-login');
+
+            btnLoading(btn, true);
+
+            try {
+                await loginUser(email, password);
+                // Force refresh profile from Firestore
+                const profile = await refreshProfile();
+
+                showToast(`Bem-vinda, ${profile?.name || email.split('@')[0]}!`, 'success');
+
+                if (profile?.role === 'gestao') {
+                    setTimeout(() => window.location.href = 'gestao.html', 500);
+                } else {
+                    // Switch to profile view
+                    document.getElementById('login-page').classList.add('hidden');
+                    showProfilePage(profile);
+                    updateNavState();
+                }
+            } catch (err) {
+                btnLoading(btn, false);
+                let msg = 'Erro ao entrar.';
+                if (err.code === 'auth/user-not-found') msg = 'E-mail nao encontrado. Crie uma conta.';
+                else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') msg = 'Senha incorreta.';
+                else if (err.code === 'auth/invalid-email') msg = 'E-mail invalido.';
+                else if (err.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Tente mais tarde.';
+                showToast(msg, 'error');
+            }
+        }
+
+        // ===== REGISTER MODAL =====
+        function openRegisterModal() { openModal('register-overlay', 'register-sheet'); }
+        function closeRegisterModal() { closeModal('register-overlay', 'register-sheet'); }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const phone = document.getElementById('reg-phone').value.trim();
+            const btn = document.getElementById('btn-register');
+
+            if (!name || !email || !password) {
+                showToast('Preencha nome, e-mail e senha', 'error');
+                return;
+            }
+
+            btnLoading(btn, true);
+
+            try {
+                await registerUser(email, password, name, phone);
+                const profile = await refreshProfile();
+
+                closeRegisterModal();
+                showToast('Conta criada com sucesso!', 'success');
+
+                if (profile?.role === 'gestao') {
+                    setTimeout(() => window.location.href = 'gestao.html', 500);
+                } else {
+                    document.getElementById('login-page').classList.add('hidden');
+                    showProfilePage(profile);
+                    updateNavState();
+                }
+            } catch (err) {
+                btnLoading(btn, false);
+                let msg = 'Erro ao criar conta.';
+                if (err.code === 'auth/email-already-in-use') msg = 'Este e-mail ja esta cadastrado. Faca login.';
+                else if (err.code === 'auth/weak-password') msg = 'Senha muito fraca. Use pelo menos 6 caracteres.';
+                else if (err.code === 'auth/invalid-email') msg = 'E-mail invalido.';
+                showToast(msg, 'error');
+            }
+        }
+
+        // ===== PROFILE PAGE =====
+        function showProfilePage(user) {
+            if (!user) user = getProfile();
+            if (!user) return;
+
             document.getElementById('login-page').classList.add('hidden');
             document.getElementById('profile-page').classList.remove('hidden');
 
             document.getElementById('profile-name').textContent = user.name || user.email.split('@')[0];
             document.getElementById('profile-email').textContent = user.email;
+            document.getElementById('profile-phone').innerHTML = user.phone
+                ? `<i class="fab fa-whatsapp" style="color:#25d366;"></i> ${user.phone}`
+                : '<i class="fas fa-phone-slash"></i> Telefone nao informado';
 
-            // Mostrar link gestão se admin
+            // Avatar
+            const avatarEl = document.getElementById('profile-avatar');
+            const fallbackEl = document.getElementById('profile-avatar-fallback');
+            if (user.profileImage) {
+                avatarEl.src = user.profileImage;
+                avatarEl.style.display = 'block';
+                fallbackEl.style.display = 'none';
+            } else {
+                avatarEl.style.display = 'none';
+                fallbackEl.style.display = 'flex';
+            }
+
+            // Admin link
             if (user.role === 'gestao') {
                 document.getElementById('profile-gestao-link').classList.remove('hidden');
             }
 
-            // Agendamentos ativos
-            const today = new Date().toISOString().split('T')[0];
-            const bookings = getBookings().filter(b => b.date >= today && b.clientEmail === user.email);
+            // Load async data
+            loadProfileBookings(user);
+            loadProfilePromotions(user);
+        }
 
+        async function loadProfileBookings(user) {
             const container = document.getElementById('profile-bookings');
-            if (bookings.length === 0) {
-                container.innerHTML = `
-                    <p class="text-sm text-muted text-center" style="padding: 12px 0;">
-                        <i class="far fa-calendar"></i> Nenhum agendamento ativo
-                    </p>`;
-            } else {
-                container.innerHTML = `
-                    <p class="text-xs fw-600 text-muted mb-12" style="text-transform: uppercase;">Seus agendamentos</p>
-                    ${bookings.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time)).map(b => {
-                        const dateObj = new Date(b.date + 'T12:00:00');
-                        const dateLabel = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-                        return `
-                            <div class="flex items-center gap-12" style="padding: 8px 0; border-bottom: 1px solid var(--border-light);">
-                                <div style="min-width: 50px;">
-                                    <p class="text-sm fw-700" style="color: var(--accent);">${b.time}</p>
-                                    <p class="text-xs text-muted">${dateLabel}</p>
-                                </div>
-                                <div style="flex:1;">
-                                    <p class="text-sm fw-600">${b.serviceName}</p>
-                                    <p class="text-xs text-muted">${b.duration}min</p>
-                                </div>
-                                <p class="text-sm fw-700" style="color: var(--accent);">R$ ${fmtPrice(b.serviceName ? getServices().find(s=>s.id===b.serviceId)?.price || 0 : 0)}</p>
-                            </div>`;
-                    }).join('')}
-                `;
-            }
-        }
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const bookings = await getBookingsByClient(user.email);
+                const active = bookings.filter(b => b.date >= today && b.status !== 'cancelado');
 
-        function handleLogin(e) {
-            e.preventDefault();
-            const name = document.getElementById('login-name').value.trim();
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value;
-
-            if (!name || !email || !password) {
-                showToast('Preencha todos os campos', 'error');
-                return;
-            }
-
-            const users = getUsers();
-            const existing = users.find(u => u.email === email);
-
-            if (existing) {
-                // Login
-                if (existing.password !== password) {
-                    showToast('Senha incorreta', 'error');
-                    document.getElementById('login-password').classList.add('is-invalid');
-                    setTimeout(() => document.getElementById('login-password').classList.remove('is-invalid'), 2000);
-                    return;
-                }
-                existing.name = name; // atualiza nome se mudou
-                localStorage.setItem('poar_users', JSON.stringify(users));
-                localStorage.setItem('poar_current_user', JSON.stringify(existing));
-                showToast(`Bem-vinda, ${existing.name}!`, 'success');
-                setTimeout(() => {
-                    if (existing.role === 'gestao') {
-                        window.location.href = 'gestao.html';
-                    } else {
-                        showProfile(existing);
-                    }
-                }, 600);
-            } else {
-                // Registro automático
-                handleRegisterWithData(name, email, password);
-            }
-        }
-
-        function handleRegister() {
-            const name = document.getElementById('login-name').value.trim();
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value;
-
-            if (!name || !email || !password) {
-                showToast('Preencha nome, e-mail e senha para criar conta', 'error');
-                return;
-            }
-            if (password.length < 4) {
-                showToast('Senha deve ter pelo menos 4 caracteres', 'error');
-                return;
-            }
-            handleRegisterWithData(name, email, password);
-        }
-
-        function handleRegisterWithData(name, email, password) {
-            const users = getUsers();
-            if (users.find(u => u.email === email)) {
-                showToast('Este e-mail já está cadastrado. Faça login.', 'error');
-                return;
-            }
-
-            // E-mail @poar.com = gestão automaticamente
-            const role = isAdmin(email) ? 'gestao' : 'cliente';
-
-            const newUser = {
-                id: Date.now().toString(),
-                email,
-                password,
-                role,
-                name
-            };
-
-            users.push(newUser);
-            localStorage.setItem('poar_users', JSON.stringify(users));
-            localStorage.setItem('poar_current_user', JSON.stringify(newUser));
-
-            showToast('Conta criada com sucesso!', 'success');
-            setTimeout(() => {
-                if (role === 'gestao') {
-                    window.location.href = 'gestao.html';
+                if (active.length === 0) {
+                    container.innerHTML = '<p class="text-sm text-muted text-center" style="padding:12px 0;"><i class="far fa-calendar"></i> Nenhum agendamento ativo</p>';
                 } else {
-                    showProfile(newUser);
+                    container.innerHTML = `
+                        <p class="text-xs fw-600 text-muted mb-12" style="text-transform:uppercase;">Seus agendamentos</p>
+                        <div class="stagger-in">
+                        ${active.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time)).map(b => {
+                            const statusClass = 'status-' + b.status;
+                            const statusLabel = b.status === 'pendente' ? 'Pendente' : b.status === 'confirmado' ? 'Confirmado' : b.status;
+                            return `
+                                <div class="flex items-center gap-12" style="padding:8px 0;border-bottom:1px solid var(--border-light);">
+                                    <div style="min-width:50px;">
+                                        <p class="text-sm fw-700" style="color:var(--accent);">${b.time}</p>
+                                        <p class="text-xs text-muted">${formatDateShort(b.date)}</p>
+                                    </div>
+                                    <div style="flex:1;">
+                                        <p class="text-sm fw-600">${b.serviceName}</p>
+                                        <p class="text-xs text-muted">${b.duration}min</p>
+                                    </div>
+                                    <span class="status-badge ${statusClass}">${statusLabel}</span>
+                                </div>`;
+                        }).join('')}
+                        </div>`;
                 }
-            }, 600);
+            } catch(e) {
+                container.innerHTML = '<p class="text-sm text-muted text-center">Erro ao carregar.</p>';
+            }
         }
 
-        function handleLogout() {
-            localStorage.removeItem('poar_current_user');
+        async function loadProfilePromotions(user) {
+            if (user.role === 'gestao') return;
+            try {
+                const promos = await getPromotions();
+                if (promos.length > 0) {
+                    await renderClientPromotions(document.getElementById('profile-promotions'), user.email);
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        // ===== EDIT PROFILE MODAL =====
+        function openEditProfileModal() {
+            const user = getProfile();
+            document.getElementById('edit-name').value = user.name || '';
+            document.getElementById('edit-phone').value = user.phone || '';
+            openModal('editprofile-overlay', 'editprofile-sheet');
+        }
+
+        function closeEditProfileModal() { closeModal('editprofile-overlay', 'editprofile-sheet'); }
+
+        async function saveProfile(e) {
+            e.preventDefault();
+            const name = document.getElementById('edit-name').value.trim();
+            const phone = document.getElementById('edit-phone').value.trim();
+            const btn = document.getElementById('btn-save-profile');
+            if (!name) { showToast('Informe seu nome', 'error'); return; }
+
+            btnLoading(btn, true);
+            try {
+                await updateUserProfile(getProfile().uid, { name, phone });
+                currentUserProfile.name = name;
+                currentUserProfile.phone = phone;
+                closeEditProfileModal();
+                showToast('Perfil atualizado!', 'success');
+                showProfilePage(currentUserProfile);
+                updateNavState();
+            } catch(e) {
+                showToast('Erro ao salvar', 'error');
+            } finally {
+                btnLoading(btn, false);
+            }
+        }
+
+        // ===== PROFILE PHOTO =====
+        async function changeProfilePhoto() {
+            const user = getProfile();
+            try {
+                showToast('Selecione uma foto...', '');
+                const url = await pickAndUploadImage(`profiles/${user.uid}_${Date.now()}`);
+                await updateUserProfile(user.uid, { profileImage: url });
+                currentUserProfile.profileImage = url;
+                showToast('Foto atualizada!', 'success');
+                showProfilePage(currentUserProfile);
+            } catch(e) {
+                if (e.message !== 'Nenhum arquivo selecionado') showToast('Erro ao enviar foto', 'error');
+            }
+        }
+
+        // ===== LOGOUT =====
+        async function handleLogout() {
+            await logoutUser();
+            currentUserProfile = null;
             showToast('Saiu da conta', 'success');
-            setTimeout(() => window.location.reload(), 500);
+            setTimeout(() => window.location.reload(), 400);
         }
     </script>
 </body>

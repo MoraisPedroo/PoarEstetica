@@ -3,55 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Poar Estética</title>
+    <title>Poar Estetica</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
     <div class="app-shell">
-        <!-- Top Header -->
         <header class="top-header">
             <a href="index.html" class="header-brand">
                 <div class="header-logo">P</div>
-                <div>
-                    <h1 class="header-title">Poar</h1>
-                    <p class="header-subtitle">Estética</p>
-                </div>
+                <div><h1 class="header-title">Poar</h1><p class="header-subtitle">Estetica</p></div>
             </a>
-
-            <!-- Desktop Nav -->
             <nav class="desktop-nav" aria-label="Menu principal">
-                <a href="index.html" class="nav-link active"><i class="fas fa-home"></i> Início</a>
+                <a href="index.html" class="nav-link active"><i class="fas fa-home"></i> Inicio</a>
                 <a href="agendar.html" class="nav-link"><i class="far fa-calendar-plus"></i> Agendar</a>
-                <a href="catalogo.html" class="nav-link"><i class="fas fa-th-large"></i> Catálogo</a>
+                <a href="catalogo.html" class="nav-link"><i class="fas fa-th-large"></i> Catalogo</a>
             </nav>
-
             <div class="header-actions">
                 <a href="login.html" class="header-link" id="header-user-btn">
-                    <i class="far fa-user"></i>
-                    <span id="header-user-name">Entrar</span>
+                    <i class="far fa-user"></i><span id="header-user-name">Entrar</span>
                 </a>
             </div>
         </header>
 
-        <!-- Main Content -->
         <main class="main-content">
             <!-- Hero -->
             <div class="hero-section">
-                <div class="hero-banner">
+                <div class="hero-banner" id="hero-banner" style="position:relative;">
                     <div class="hero-content">
-                        <span class="hero-tag">Bem-vinda</span>
-                        <h2 class="hero-title">A sua Beleza, Elevada</h2>
-                        <p class="hero-subtitle">Cuidados essenciais para sua pele radiante</p>
-                        <a href="catalogo.html" class="hero-btn"><i class="fas fa-arrow-right"></i> Ver Catálogo e Serviços</a>
+                        <span class="hero-tag" id="hero-tag">Bem-vinda</span>
+                        <span class="edit-inline hidden" id="edit-hero-tag" onclick="editHeroText('heroTag')"><i class="fas fa-pen"></i></span>
+                        <h2 class="hero-title" id="hero-title">A sua Beleza, Elevada</h2>
+                        <span class="edit-inline hidden" id="edit-hero-title" onclick="editHeroText('heroTitle')"><i class="fas fa-pen"></i></span>
+                        <p class="hero-subtitle" id="hero-subtitle">Cuidados essenciais para sua pele radiante</p>
+                        <span class="edit-inline hidden" id="edit-hero-subtitle" onclick="editHeroText('heroSubtitle')"><i class="fas fa-pen"></i></span>
+                        <a href="catalogo.html" class="hero-btn"><i class="fas fa-arrow-right"></i> Ver Catalogo e Servicos</a>
                     </div>
+                    <!-- Admin: edit background -->
+                    <button class="edit-badge hidden" id="edit-hero-bg" onclick="editHeroBackground()" style="top:12px;right:12px;width:34px;height:34px;font-size:0.75rem;" title="Alterar fundo">
+                        <i class="fas fa-image"></i>
+                    </button>
                 </div>
+            </div>
+
+            <!-- Promoções ativas (para cliente logado) -->
+            <div class="section hidden" id="promo-section">
+                <div class="section-header">
+                    <h3 class="section-title"><i class="fas fa-gift" style="color:var(--warning);"></i> Suas Promocoes</h3>
+                </div>
+                <div id="home-promotions" style="padding: 0 20px;"></div>
             </div>
 
             <!-- Serviços -->
             <div class="section">
                 <div class="section-header">
-                    <h3 class="section-title">Serviços Populares</h3>
+                    <h3 class="section-title">Servicos Populares</h3>
                     <a href="catalogo.html" class="section-link">Ver todos <i class="fas fa-chevron-right" style="font-size:0.6rem;"></i></a>
                 </div>
             </div>
@@ -69,42 +75,229 @@
             <div style="height: 32px;"></div>
         </main>
 
-        <!-- WhatsApp FAB -->
-        <a href="https://wa.me/5500000000000" target="_blank" class="fab-whatsapp" aria-label="WhatsApp">
-            <i class="fab fa-whatsapp"></i>
-        </a>
+        <!-- MODAL: Admin Edit -->
+        <div class="modal-overlay" id="edit-overlay" onclick="closeEdit()"></div>
+        <div class="bottom-sheet" id="edit-sheet">
+            <div class="bottom-sheet-handle"></div>
+            <div id="edit-content"></div>
+        </div>
 
-        <!-- Mobile Bottom Nav -->
+        <a href="https://wa.me/5500000000000" target="_blank" class="fab-whatsapp" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+
         <nav class="bottom-nav" aria-label="Menu principal">
-            <a href="index.html" class="nav-btn active"><i class="fas fa-home"></i><span>Início</span></a>
+            <a href="index.html" class="nav-btn active"><i class="fas fa-home"></i><span>Inicio</span></a>
             <a href="agendar.html" class="nav-btn"><i class="far fa-calendar-plus"></i><span>Agendar</span></a>
-            <a href="catalogo.html" class="nav-btn"><i class="fas fa-th-large"></i><span>Catálogo</span></a>
+            <a href="catalogo.html" class="nav-btn"><i class="fas fa-th-large"></i><span>Catalogo</span></a>
             <a href="login.html" class="nav-btn"><i class="far fa-user"></i><span>Entrar</span></a>
         </nav>
     </div>
 
     <div class="toast" id="toast"></div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+    <script src="firebase-config.js"></script>
     <script src="app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            renderHomeServices();
-            renderHomeProducts();
+        let homeServices = [];
+        let homeProducts = [];
 
-            // Atualiza botão de login/nome
-            const user = getCurrentUser();
-            if (user) {
-                document.getElementById('header-user-name').textContent = user.name || user.email.split('@')[0];
-                document.getElementById('header-user-btn').href = user.role === 'gestao' ? 'gestao.html' : 'login.html';
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('home-services').innerHTML = skeletonServiceCards(4);
+            document.getElementById('home-products').innerHTML = skeletonProductCards(4);
 
-                // mobile
-                const mobileLogin = document.querySelector('.bottom-nav a[href="login.html"]');
-                if (mobileLogin) {
-                    mobileLogin.querySelector('span').textContent = user.name || 'Perfil';
-                    if (user.role === 'gestao') mobileLogin.href = 'gestao.html';
+            await initAuth();
+            updateNavState();
+
+            Promise.all([
+                applyHeroConfig(),
+                renderHomeServices(),
+                renderHomeProducts(),
+                seedDemoDataIfEmpty()
+            ]).catch(console.error);
+
+            if (isAdmin()) {
+                document.querySelectorAll('#edit-hero-bg, #edit-hero-tag, #edit-hero-title, #edit-hero-subtitle').forEach(el => el.classList.remove('hidden'));
+            }
+
+            if (isLoggedIn() && !isAdmin()) {
+                const promoSection = document.getElementById('promo-section');
+                const promoContainer = document.getElementById('home-promotions');
+                const promos = await getPromotions();
+                if (promos.length > 0) {
+                    promoSection.classList.remove('hidden');
+                    await renderClientPromotions(promoContainer, getProfile().email);
                 }
             }
         });
+
+        /* ========== ADMIN EDIT MODAL ========== */
+        function openEditModal(id, type) {
+            const items = type === 'servico' ? homeServices : homeProducts;
+            const item = items.find(function(i) { return i.id === id; });
+            if (!item) return;
+
+            const isSvc = type === 'servico';
+            const img = item.image || (isSvc
+                ? 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop'
+                : 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=300&fit=crop');
+
+            let fieldsHtml =
+                '<div class="edit-modal-preview">' +
+                    '<img src="' + img + '" alt="' + item.name + '" id="edit-preview-img">' +
+                    '<button class="edit-badge" onclick="changeEditImage(\'' + id + '\',\'' + type + '\')" title="Alterar imagem"><i class="fas fa-camera"></i></button>' +
+                '</div>' +
+                '<div class="form-group">' +
+                    '<label class="form-label">Nome</label>' +
+                    '<input type="text" class="form-control" id="edit-name" value="' + (item.name || '') + '">' +
+                '</div>' +
+                '<div class="form-group">' +
+                    '<label class="form-label">Descricao</label>' +
+                    '<textarea class="form-control" id="edit-description" rows="3">' + (item.description || '') + '</textarea>' +
+                '</div>' +
+                '<div class="form-group">' +
+                    '<label class="form-label">Preco (R$)</label>' +
+                    '<input type="number" class="form-control" id="edit-price" step="0.01" min="0" value="' + (item.price || 0) + '">' +
+                '</div>';
+
+            if (isSvc) {
+                fieldsHtml +=
+                    '<div class="form-row">' +
+                        '<div class="form-group">' +
+                            '<label class="form-label">Duracao (min)</label>' +
+                            '<input type="number" class="form-control" id="edit-duration" min="1" value="' + (item.duration || 30) + '">' +
+                        '</div>' +
+                        '<div class="form-group">' +
+                            '<label class="form-label">Preparacao (min)</label>' +
+                            '<input type="number" class="form-control" id="edit-prepTime" min="0" value="' + (item.prepTime || 0) + '">' +
+                        '</div>' +
+                    '</div>';
+            } else {
+                var isReq = item.stockType === 'requisicao';
+                fieldsHtml +=
+                    '<div class="form-group">' +
+                        '<label class="form-label">Tipo de estoque</label>' +
+                        '<div style="display:flex;gap:8px;">' +
+                            '<button class="chip ' + (!isReq ? 'active' : '') + '" id="edit-stock-qty-btn" onclick="toggleStockType(\'quantidade\')"><i class="fas fa-boxes"></i> Quantidade</button>' +
+                            '<button class="chip ' + (isReq ? 'active' : '') + '" id="edit-stock-req-btn" onclick="toggleStockType(\'requisicao\')"><i class="fas fa-truck"></i> Sob encomenda</button>' +
+                        '</div>' +
+                        '<input type="hidden" id="edit-stockType" value="' + (item.stockType || 'quantidade') + '">' +
+                    '</div>' +
+                    '<div id="edit-stock-qty-fields" class="' + (isReq ? 'hidden' : '') + '">' +
+                        '<div class="form-row">' +
+                            '<div class="form-group">' +
+                                '<label class="form-label">Quantidade em estoque</label>' +
+                                '<input type="number" class="form-control" id="edit-stockQuantity" min="0" value="' + (item.stockQuantity || 0) + '">' +
+                            '</div>' +
+                            '<div class="form-group">' +
+                                '<label class="form-label">Alerta de estoque baixo</label>' +
+                                '<input type="number" class="form-control" id="edit-stockAlert" min="0" value="' + (item.stockAlert || 0) + '">' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div id="edit-stock-req-fields" class="' + (!isReq ? 'hidden' : '') + '">' +
+                        '<div class="form-group">' +
+                            '<label class="form-label">Prazo de entrega</label>' +
+                            '<input type="text" class="form-control" id="edit-deliveryTime" placeholder="Ex: 3 a 5 dias uteis" value="' + (item.deliveryTime || '') + '">' +
+                        '</div>' +
+                    '</div>';
+            }
+
+            fieldsHtml +=
+                '<button class="btn btn-primary btn-full btn-lg mt-16" id="edit-save-btn" onclick="saveEdit(\'' + id + '\',\'' + type + '\')">' +
+                    '<i class="fas fa-check"></i> Salvar alteracoes' +
+                '</button>' +
+                '<button class="btn btn-ghost btn-full mt-8" onclick="closeEdit()" style="color:var(--text-muted);">Cancelar</button>';
+
+            document.getElementById('edit-content').innerHTML =
+                '<h3 class="bottom-sheet-title" style="padding:0 0 16px;"><i class="fas fa-pen"></i> Editar ' + (isSvc ? 'servico' : 'produto') + '</h3>' +
+                fieldsHtml;
+
+            openModal('edit-overlay', 'edit-sheet');
+        }
+
+        function toggleStockType(type) {
+            document.getElementById('edit-stockType').value = type;
+            var qtyBtn = document.getElementById('edit-stock-qty-btn');
+            var reqBtn = document.getElementById('edit-stock-req-btn');
+            var qtyFields = document.getElementById('edit-stock-qty-fields');
+            var reqFields = document.getElementById('edit-stock-req-fields');
+            if (type === 'quantidade') {
+                qtyBtn.classList.add('active'); reqBtn.classList.remove('active');
+                qtyFields.classList.remove('hidden'); reqFields.classList.add('hidden');
+            } else {
+                qtyBtn.classList.remove('active'); reqBtn.classList.add('active');
+                qtyFields.classList.add('hidden'); reqFields.classList.remove('hidden');
+            }
+        }
+
+        async function changeEditImage(id, type) {
+            try {
+                showToast('Selecione uma imagem...', '');
+                var path = (type === 'servico' ? 'services' : 'products') + '/' + id + '_' + Date.now();
+                var url = await pickAndUploadImage(path);
+                var previewImg = document.getElementById('edit-preview-img');
+                if (previewImg) previewImg.src = url;
+                if (type === 'servico') {
+                    await updateService(id, { image: url });
+                    var sIdx = homeServices.findIndex(function(s) { return s.id === id; });
+                    if (sIdx >= 0) homeServices[sIdx].image = url;
+                } else {
+                    await updateProduct(id, { image: url });
+                    var pIdx = homeProducts.findIndex(function(p) { return p.id === id; });
+                    if (pIdx >= 0) homeProducts[pIdx].image = url;
+                }
+                showToast('Imagem atualizada!', 'success');
+            } catch(e) {
+                if (e.message !== 'Nenhum arquivo selecionado') showToast('Erro ao enviar imagem', 'error');
+            }
+        }
+
+        async function saveEdit(id, type) {
+            var btn = document.getElementById('edit-save-btn');
+            btnLoading(btn, true);
+            try {
+                var isSvc = type === 'servico';
+                var data = {
+                    name: document.getElementById('edit-name').value.trim(),
+                    description: document.getElementById('edit-description').value.trim(),
+                    price: parseFloat(document.getElementById('edit-price').value) || 0
+                };
+                if (isSvc) {
+                    data.duration = parseInt(document.getElementById('edit-duration').value) || 30;
+                    data.prepTime = parseInt(document.getElementById('edit-prepTime').value) || 0;
+                    await updateService(id, data);
+                    var sIdx = homeServices.findIndex(function(s) { return s.id === id; });
+                    if (sIdx >= 0) Object.assign(homeServices[sIdx], data);
+                } else {
+                    var stockType = document.getElementById('edit-stockType').value;
+                    data.stockType = stockType;
+                    if (stockType === 'quantidade') {
+                        data.stockQuantity = parseInt(document.getElementById('edit-stockQuantity').value) || 0;
+                        data.stockAlert = parseInt(document.getElementById('edit-stockAlert').value) || 0;
+                    } else {
+                        data.deliveryTime = document.getElementById('edit-deliveryTime').value.trim();
+                    }
+                    await updateProduct(id, data);
+                    var pIdx = homeProducts.findIndex(function(p) { return p.id === id; });
+                    if (pIdx >= 0) Object.assign(homeProducts[pIdx], data);
+                }
+                btnLoading(btn, false);
+                closeEdit();
+                showToast('Alteracoes salvas!', 'success');
+                renderHomeServices();
+                renderHomeProducts();
+            } catch(e) {
+                btnLoading(btn, false);
+                console.error(e);
+                showToast('Erro ao salvar. Tente novamente.', 'error');
+            }
+        }
+
+        function closeEdit() { closeModal('edit-overlay', 'edit-sheet'); }
     </script>
 </body>
 </html>

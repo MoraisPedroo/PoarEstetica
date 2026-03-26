@@ -1,133 +1,111 @@
 /* ============================================
-   POAR ESTÉTICA - Lógica Principal
-   localStorage como banco de dados
+   POAR ESTÉTICA — Shared Application Logic
+   UI helpers, utilities, common renders
    ============================================ */
 
-// ========== DADOS ==========
-function getServices() {
-    return JSON.parse(localStorage.getItem('poar_services') || '[]');
-}
-function getProducts() {
-    return JSON.parse(localStorage.getItem('poar_products') || '[]');
-}
-function getBookings() {
-    return JSON.parse(localStorage.getItem('poar_bookings') || '[]');
-}
-function getUsers() {
-    return JSON.parse(localStorage.getItem('poar_users') || '[]');
-}
-function getCurrentUser() {
-    return JSON.parse(localStorage.getItem('poar_current_user') || 'null');
-}
+// ========== GLOBAL STATE ==========
+let currentUserProfile = null;
+let authReady = false;
+let _authReadyResolve = null;
+const authReadyPromise = new Promise(r => { _authReadyResolve = r; });
 
-// ========== SEED (dados de exemplo) ==========
-function seedDemoData() {
-    if (getServices().length === 0) {
-        const services = [
-            { id: 'svc1', name: 'Limpeza de Pele', description: 'Limpeza profunda com extração e hidratação.', price: 120, duration: 60, prepTime: 15, image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop' },
-            { id: 'svc2', name: 'Massagem Relaxante', description: 'Massagem corporal com óleos essenciais.', price: 150, duration: 50, prepTime: 10, image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=300&fit=crop' },
-            { id: 'svc3', name: 'Peeling Facial', description: 'Renovação celular com ácidos profissionais.', price: 180, duration: 45, prepTime: 20, image: 'https://images.unsplash.com/photo-1552693673-1bf958298935?w=400&h=300&fit=crop' },
-            { id: 'svc4', name: 'Design de Sobrancelhas', description: 'Modelagem personalizada com henna ou tintura.', price: 60, duration: 30, prepTime: 5, image: 'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?w=400&h=300&fit=crop' },
-            { id: 'svc5', name: 'Drenagem Linfática', description: 'Técnica suave para redução de inchaço e retenção.', price: 140, duration: 60, prepTime: 10, image: 'https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=400&h=300&fit=crop' }
-        ];
-        localStorage.setItem('poar_services', JSON.stringify(services));
-    }
-    if (getProducts().length === 0) {
-        const products = [
-            { id: 'prod1', name: 'Protetor Solar FPS50', description: 'Proteção solar de alta performance, toque seco.', price: 89.90, image: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=300&fit=crop' },
-            { id: 'prod2', name: 'Sérum Vitamina C', description: 'Antioxidante potente para luminosidade.', price: 120, image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&h=300&fit=crop' },
-            { id: 'prod3', name: 'Hidratante Facial', description: 'Hidratação profunda com ácido hialurônico.', price: 75, image: 'https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=400&h=300&fit=crop' },
-            { id: 'prod4', name: 'Água Micelar', description: 'Limpeza suave e eficaz para todos os tipos de pele.', price: 45, image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=300&fit=crop' }
-        ];
-        localStorage.setItem('poar_products', JSON.stringify(products));
-    }
-    // Admin padrão (e-mails com @poar.com são gestão)
-    const users = getUsers();
-    if (!users.find(u => u.email === 'admin@poar.com')) {
-        users.push({ id: 'admin', email: 'admin@poar.com', password: 'admin', role: 'gestao', name: 'Administradora' });
-        localStorage.setItem('poar_users', JSON.stringify(users));
-    }
-}
-seedDemoData();
-
-// ========== HOME RENDERS ==========
-function renderHomeServices() {
-    const container = document.getElementById('home-services');
-    if (!container) return;
-    const services = getServices().slice(0, 6);
-    if (services.length === 0) {
-        container.innerHTML = '<p class="text-sm text-muted" style="padding: 0 20px;">Nenhum serviço disponível.</p>';
-        return;
-    }
-    container.innerHTML = services.map(s => `
-        <a href="catalogo.html" class="service-card">
-            <img src="${s.image || placeholderImg('servico')}" alt="${s.name}" class="service-card-img" loading="lazy">
-            <div class="service-card-body">
-                <h4 class="service-card-name">${s.name}</h4>
-                <p class="service-card-meta"><i class="far fa-clock"></i> ${s.duration} min</p>
-                <p class="service-card-price">R$ ${fmtPrice(s.price)}</p>
-            </div>
-        </a>`).join('');
-}
-
-function renderHomeProducts() {
-    const container = document.getElementById('home-products');
-    if (!container) return;
-    const products = getProducts().slice(0, 6);
-    if (products.length === 0) {
-        container.innerHTML = '<p class="text-sm text-muted" style="padding: 0 20px;">Nenhum produto disponível.</p>';
-        return;
-    }
-    container.innerHTML = products.map(p => `
-        <a href="catalogo.html#produtos" class="product-card">
-            <img src="${p.image || placeholderImg('produto')}" alt="${p.name}" class="product-card-img" loading="lazy">
-            <p class="product-card-name">${p.name}</p>
-            <p class="product-card-price">R$ ${fmtPrice(p.price)}</p>
-        </a>`).join('');
-}
-
-// ========== AGENDAMENTO: Lógica de bloqueio ==========
-
-/**
- * Retorna a razão de indisponibilidade de um serviço num horário,
- * ou null se disponível.
- */
-function getUnavailableReason(date, timeStr, service, bookings, allServices) {
-    const slotStart = timeToMin(timeStr);
-    const slotEnd = slotStart + service.duration + (service.prepTime || 0);
-
-    // Verifica se o serviço terminaria depois do expediente (18h)
-    if (slotEnd > 18 * 60) {
-        return `Serviço de ${service.duration}min não cabe neste horário (ultrapassa o expediente)`;
-    }
-
-    for (const b of bookings.filter(b => b.date === date)) {
-        const bStart = timeToMin(b.time);
-        const bSvc = allServices.find(s => s.id === b.serviceId);
-        const bTotal = (b.duration || 0) + (b.prepTime || (bSvc ? bSvc.prepTime : 0) || 0);
-        const bEnd = bStart + bTotal;
-
-        // Verifica se o novo serviço colide com algum agendamento existente
-        if (slotStart < bEnd && slotEnd > bStart) {
-            return `Conflito com "${b.serviceName}" agendado às ${b.time} (${b.duration}min + preparação)`;
+// Initialize auth listener ONCE
+(function setupAuthListener() {
+    onAuthChange(async (user) => {
+        if (user) {
+            currentUserProfile = await getUserProfile(user.uid);
+            if (currentUserProfile) {
+                currentUserProfile.uid = user.uid;
+                currentUserProfile.firebaseUser = user;
+            }
+        } else {
+            currentUserProfile = null;
         }
-    }
-    return null;
+        authReady = true;
+        _authReadyResolve(currentUserProfile);
+        document.dispatchEvent(new CustomEvent('authReady', { detail: currentUserProfile }));
+    });
+})();
+
+/** Wait for Firebase Auth to resolve. Returns user profile or null. */
+async function initAuth() {
+    if (authReady) return currentUserProfile;
+    return authReadyPromise;
 }
 
 /**
- * Verifica se ALGUM serviço pode ser agendado neste horário
+ * Force-refresh user profile from Firestore (use after login/register).
  */
-function isSlotFullyBlocked(date, timeStr, bookings, allServices) {
-    for (const svc of allServices) {
-        if (!getUnavailableReason(date, timeStr, svc, bookings, allServices)) {
-            return false;
+async function refreshProfile() {
+    const user = auth.currentUser;
+    if (user) {
+        currentUserProfile = await getUserProfile(user.uid);
+        if (currentUserProfile) {
+            currentUserProfile.uid = user.uid;
+            currentUserProfile.firebaseUser = user;
         }
+    } else {
+        currentUserProfile = null;
     }
-    return true;
+    return currentUserProfile;
 }
 
-// ========== UTILITÁRIOS ==========
+function isLoggedIn() { return !!currentUserProfile; }
+function isAdmin() { return currentUserProfile && currentUserProfile.role === 'gestao'; }
+function getProfile() { return currentUserProfile; }
+
+// ========== TOAST ==========
+function showToast(message, type) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.className = 'toast' + (type ? ' toast-' + type : '');
+    requestAnimationFrame(() => {
+        toast.classList.add('show');
+    });
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove('show'), 2800);
+}
+
+// ========== MODAL HELPERS ==========
+function openModal(overlayId, sheetId) {
+    const ov = document.getElementById(overlayId);
+    const sh = document.getElementById(sheetId);
+    if (ov) ov.classList.add('show');
+    // Small delay for smoother animation
+    requestAnimationFrame(() => {
+        if (sh) sh.classList.add('show');
+    });
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal(overlayId, sheetId) {
+    const sh = document.getElementById(sheetId);
+    const ov = document.getElementById(overlayId);
+    if (sh) sh.classList.remove('show');
+    setTimeout(() => {
+        if (ov) ov.classList.remove('show');
+        document.body.style.overflow = '';
+    }, 250);
+}
+
+// ========== FORMATTING ==========
+function fmtPrice(v) {
+    return parseFloat(v).toFixed(2).replace('.', ',');
+}
+
+function formatDateBR(dateStr) {
+    return new Date(dateStr + 'T12:00:00').toLocaleDateString('pt-BR', {
+        weekday: 'long', day: 'numeric', month: 'long'
+    });
+}
+
+function formatDateShort(dateStr) {
+    return new Date(dateStr + 'T12:00:00').toLocaleDateString('pt-BR', {
+        day: '2-digit', month: 'short'
+    });
+}
+
 function timeToMin(t) {
     const [h, m] = t.split(':').map(Number);
     return h * 60 + m;
@@ -137,80 +115,328 @@ function minToTime(m) {
     return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 }
 
-function fmtPrice(v) {
-    return parseFloat(v).toFixed(2).replace('.', ',');
-}
-
-function placeholderImg(type) {
-    return type === 'servico'
-        ? 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop'
-        : 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=300&fit=crop';
-}
-
-function formatDateBR(dateStr) {
-    return new Date(dateStr + 'T12:00:00').toLocaleDateString('pt-BR', {
-        weekday: 'long', day: 'numeric', month: 'long'
+// ========== PHONE MASK ==========
+function applyPhoneMask(el) {
+    if (!el) return;
+    el.addEventListener('input', function (e) {
+        let v = e.target.value.replace(/\D/g, '').slice(0, 11);
+        if (v.length > 6) v = `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`;
+        else if (v.length > 2) v = `(${v.slice(0, 2)}) ${v.slice(2)}`;
+        else if (v.length > 0) v = `(${v}`;
+        e.target.value = v;
     });
 }
 
-// ========== TOAST ==========
-function showToast(message, type = '') {
-    const toast = document.getElementById('toast');
-    if (!toast) return;
-    const icon = type === 'success' ? '✓ ' : type === 'error' ? '✕ ' : '';
-    toast.innerHTML = icon + message;
-    toast.className = 'toast' + (type ? ' toast-' + type : '');
-    toast.classList.add('show');
-    clearTimeout(toast._timer);
-    toast._timer = setTimeout(() => toast.classList.remove('show'), 2500);
-}
+// ========== AVAILABILITY SLOT GENERATION ==========
+function generateTimeSlotsFromAvailability(availability, dayOfWeek) {
+    const config = availability[String(dayOfWeek)];
+    if (!config || !config.enabled) return [];
 
-// ========== MÁSCARA TELEFONE ==========
-document.addEventListener('DOMContentLoaded', () => {
-    const phoneInput = document.getElementById('client-phone');
-    if (phoneInput) {
-        phoneInput.addEventListener('input', function (e) {
-            let v = e.target.value.replace(/\D/g, '').slice(0, 11);
-            if (v.length > 6) v = `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`;
-            else if (v.length > 2) v = `(${v.slice(0, 2)}) ${v.slice(2)}`;
-            else if (v.length > 0) v = `(${v}`;
-            e.target.value = v;
-        });
+    const start = timeToMin(config.startTime || '08:00');
+    const end = timeToMin(config.endTime || '18:00');
+    const lunchStart = timeToMin(config.lunchStart || '12:00');
+    const lunchEnd = timeToMin(config.lunchEnd || '13:00');
+
+    const slots = [];
+    for (let m = start; m < end; m += 30) {
+        if (m >= lunchStart && m < lunchEnd) continue;
+        slots.push(minToTime(m));
     }
-});
-
-// ========== MODAL HELPERS ==========
-function openModal(overlayId, sheetId) {
-    document.getElementById(overlayId).classList.add('show');
-    document.getElementById(sheetId).classList.add('show');
+    return slots;
 }
 
-function closeModal(overlayId, sheetId) {
-    document.getElementById(overlayId).classList.remove('show');
-    document.getElementById(sheetId).classList.remove('show');
+// ========== BOOKING CONFLICT CHECK ==========
+function getUnavailableReason(date, timeStr, service, bookings, allServices) {
+    const slotStart = timeToMin(timeStr);
+    const slotEnd = slotStart + service.duration + (service.prepTime || 0);
+
+    if (slotEnd > 18 * 60) {
+        return `Servico de ${service.duration}min nao cabe neste horario (ultrapassa o expediente)`;
+    }
+
+    for (const b of bookings.filter(b2 => b2.date === date && (b2.status === 'pendente' || b2.status === 'confirmado'))) {
+        const bStart = timeToMin(b.time);
+        const bSvc = allServices.find(s => s.id === b.serviceId);
+        const bTotal = (b.duration || 0) + (b.prepTime || (bSvc ? bSvc.prepTime : 0) || 0);
+        const bEnd = bStart + bTotal;
+
+        if (slotStart < bEnd && slotEnd > bStart) {
+            return `Conflito com "${b.serviceName}" agendado as ${b.time} (${b.duration}min + preparacao)`;
+        }
+    }
+    return null;
 }
 
-// ========== NAV: Atualiza link ativo no desktop-nav ==========
-function updateActiveNav() {
+function isSlotFullyBlocked(date, timeStr, bookings, allServices) {
+    for (const svc of allServices) {
+        if (!getUnavailableReason(date, timeStr, svc, bookings, allServices)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// ========== NAV: Update header/bottom nav ==========
+function updateNavState() {
     const page = window.location.pathname.split('/').pop() || 'index.html';
+
     document.querySelectorAll('.desktop-nav .nav-link, .bottom-nav .nav-btn').forEach(el => {
         const href = el.getAttribute('href');
-        if (href === page) {
-            el.classList.add('active');
-        } else {
-            el.classList.remove('active');
-        }
+        if (href === page) el.classList.add('active');
+        else el.classList.remove('active');
     });
-}
-document.addEventListener('DOMContentLoaded', updateActiveNav);
 
-// ========== AUTH HELPERS ==========
-function isAdmin(email) {
-    return email && email.endsWith('@poar.com');
+    const headerName = document.getElementById('header-user-name');
+    const headerBtn = document.getElementById('header-user-btn');
+
+    if (currentUserProfile && headerName) {
+        headerName.textContent = currentUserProfile.name || currentUserProfile.email.split('@')[0];
+        if (headerBtn) {
+            headerBtn.href = currentUserProfile.role === 'gestao' ? 'gestao.html' : 'login.html';
+        }
+    }
+
+    const mobileLogin = document.querySelector('.bottom-nav a[href="login.html"]');
+    if (currentUserProfile && mobileLogin) {
+        mobileLogin.querySelector('span').textContent = currentUserProfile.name || 'Perfil';
+        if (currentUserProfile.role === 'gestao') {
+            mobileLogin.href = 'gestao.html';
+        }
+    }
 }
 
-function getUserDisplayName() {
-    const user = getCurrentUser();
-    if (!user) return null;
-    return user.name || user.email.split('@')[0];
+// ========== SKELETON LOADERS ==========
+function skeletonServiceCards(count) {
+    return Array.from({ length: count }, () => `
+        <div class="skeleton-service skeleton-card">
+            <div class="skeleton skeleton-img"></div>
+            <div class="skeleton-body">
+                <div class="skeleton skeleton-text w-80"></div>
+                <div class="skeleton skeleton-text w-40"></div>
+                <div class="skeleton skeleton-text w-60" style="height:14px;margin-top:6px;"></div>
+            </div>
+        </div>`).join('');
+}
+
+function skeletonProductCards(count) {
+    return Array.from({ length: count }, () => `
+        <div class="skeleton-service skeleton-card" style="min-width:130px;max-width:130px;text-align:center;padding:14px;">
+            <div class="skeleton" style="width:80px;height:80px;border-radius:var(--r-md);margin:0 auto 8px;"></div>
+            <div class="skeleton skeleton-text w-80" style="margin:0 auto 4px;"></div>
+            <div class="skeleton skeleton-text w-60" style="height:14px;margin:0 auto;"></div>
+        </div>`).join('');
+}
+
+function skeletonCatalogGrid(count) {
+    return Array.from({ length: count }, () => `
+        <div class="skeleton-card">
+            <div class="skeleton skeleton-img"></div>
+            <div class="skeleton-body">
+                <div class="skeleton skeleton-text w-80"></div>
+                <div class="skeleton skeleton-text w-60"></div>
+                <div class="skeleton skeleton-text w-40" style="height:14px;margin-top:6px;"></div>
+            </div>
+        </div>`).join('');
+}
+
+function skeletonCalendar() {
+    return Array.from({ length: 35 }, () =>
+        `<div class="skeleton" style="aspect-ratio:1;border-radius:var(--r-md);"></div>`
+    ).join('');
+}
+
+function showPageLoading(el) {
+    if (!el) return;
+    el.innerHTML = `<div class="page-loading"><div class="spinner"></div><p>Carregando...</p></div>`;
+}
+
+function showLoading(el) {
+    if (!el) return;
+    el.innerHTML = `<div class="page-loading" style="min-height:20vh;"><div class="spinner"></div><p>Carregando...</p></div>`;
+}
+
+// ========== RENDER HOME HELPERS ==========
+async function renderHomeServices() {
+    const container = document.getElementById('home-services');
+    if (!container) return;
+    container.innerHTML = skeletonServiceCards(4);
+    try {
+        const services = await getServices();
+        if (typeof homeServices !== 'undefined') homeServices = services;
+        if (services.length === 0) {
+            container.innerHTML = '<p class="text-sm text-muted" style="padding:0 20px;">Nenhum servico disponivel.</p>';
+            return;
+        }
+        container.innerHTML = '';
+        container.classList.add('stagger-in');
+        container.innerHTML = services.slice(0, 6).map(s => `
+            <a href="catalogo.html" class="service-card">
+                <div style="position:relative;">
+                    <img src="${s.image || 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop'}" alt="${s.name}" class="service-card-img" loading="lazy">
+                    ${isAdmin() ? `<button class="edit-badge" onclick="event.preventDefault(); openEditModal('${s.id}','servico')" title="Editar"><i class="fas fa-pen"></i></button>` : ''}
+                </div>
+                <div class="service-card-body">
+                    <h4 class="service-card-name">${s.name}</h4>
+                    <p class="service-card-meta"><i class="far fa-clock"></i> ${s.duration} min</p>
+                    <p class="service-card-price">R$ ${fmtPrice(s.price)}</p>
+                </div>
+            </a>`).join('');
+    } catch (err) {
+        container.innerHTML = '<p class="text-sm text-muted" style="padding:0 20px;">Erro ao carregar servicos.</p>';
+        console.error(err);
+    }
+}
+
+async function renderHomeProducts() {
+    const container = document.getElementById('home-products');
+    if (!container) return;
+    container.innerHTML = skeletonProductCards(4);
+    try {
+        const products = await getProducts();
+        if (typeof homeProducts !== 'undefined') homeProducts = products;
+        if (products.length === 0) {
+            container.innerHTML = '<p class="text-sm text-muted" style="padding:0 20px;">Nenhum produto disponivel.</p>';
+            return;
+        }
+        container.innerHTML = '';
+        container.classList.add('stagger-in');
+        container.innerHTML = products.slice(0, 6).map(p => `
+            <a href="catalogo.html#produtos" class="product-card">
+                <div style="position:relative;">
+                    <img src="${p.image || 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=300&fit=crop'}" alt="${p.name}" class="product-card-img" loading="lazy">
+                    ${isAdmin() ? `<button class="edit-badge" onclick="event.preventDefault(); openEditModal('${p.id}','produto')" title="Editar"><i class="fas fa-pen"></i></button>` : ''}
+                </div>
+                <p class="product-card-name">${p.name}</p>
+                <p class="product-card-price">R$ ${fmtPrice(p.price)}</p>
+            </a>`).join('');
+    } catch (err) {
+        container.innerHTML = '<p class="text-sm text-muted" style="padding:0 20px;">Erro ao carregar produtos.</p>';
+        console.error(err);
+    }
+}
+
+// ========== ADMIN IMAGE EDIT (from Home) ==========
+async function editServiceImage(serviceId) {
+    try {
+        showToast('Selecione uma imagem...', '');
+        const url = await pickAndUploadImage(`services/${serviceId}_${Date.now()}`);
+        await updateService(serviceId, { image: url });
+        showToast('Imagem atualizada!', 'success');
+        renderHomeServices();
+    } catch (err) {
+        if (err.message !== 'Nenhum arquivo selecionado') showToast('Erro ao enviar imagem', 'error');
+    }
+}
+
+async function editProductImage(productId) {
+    try {
+        showToast('Selecione uma imagem...', '');
+        const url = await pickAndUploadImage(`products/${productId}_${Date.now()}`);
+        await updateProduct(productId, { image: url });
+        showToast('Imagem atualizada!', 'success');
+        renderHomeProducts();
+    } catch (err) {
+        if (err.message !== 'Nenhum arquivo selecionado') showToast('Erro ao enviar imagem', 'error');
+    }
+}
+
+async function editHeroBackground() {
+    try {
+        showToast('Selecione uma imagem de fundo...', '');
+        const url = await pickAndUploadImage(`site/hero_${Date.now()}`);
+        await updateSiteConfig({ heroBackground: url });
+        showToast('Fundo atualizado!', 'success');
+        applyHeroConfig();
+    } catch (err) {
+        if (err.message !== 'Nenhum arquivo selecionado') showToast('Erro ao enviar imagem', 'error');
+    }
+}
+
+async function applyHeroConfig() {
+    try {
+        const config = await getSiteConfig();
+        const banner = document.querySelector('.hero-banner');
+        if (banner && config.heroBackground) {
+            banner.style.backgroundImage = `linear-gradient(135deg, rgba(196,168,130,0.85), rgba(139,106,71,0.85)), url('${config.heroBackground}')`;
+            banner.style.backgroundSize = 'cover';
+            banner.style.backgroundPosition = 'center';
+        }
+        const titleEl = document.getElementById('hero-title');
+        const subtitleEl = document.getElementById('hero-subtitle');
+        const tagEl = document.getElementById('hero-tag');
+        if (titleEl && config.heroTitle) titleEl.textContent = config.heroTitle;
+        if (subtitleEl && config.heroSubtitle) subtitleEl.textContent = config.heroSubtitle;
+        if (tagEl && config.heroTag) tagEl.textContent = config.heroTag;
+    } catch (err) {
+        console.error('Error loading site config:', err);
+    }
+}
+
+async function editHeroText(field) {
+    const config = await getSiteConfig();
+    const labels = { heroTitle: 'Titulo do Banner', heroSubtitle: 'Subtitulo do Banner', heroTag: 'Tag do Banner' };
+    const current = config[field] || '';
+    const newVal = prompt(labels[field] || field, current);
+    if (newVal !== null && newVal !== current) {
+        await updateSiteConfig({ [field]: newVal });
+        showToast('Texto atualizado!', 'success');
+        applyHeroConfig();
+    }
+}
+
+// ========== PROMOTION RENDER FOR CLIENT ==========
+async function renderClientPromotions(containerEl, clientEmail) {
+    if (!containerEl || !clientEmail) return;
+    try {
+        const promotions = await getPromotions();
+        if (promotions.length === 0) { containerEl.innerHTML = ''; return; }
+
+        let html = '';
+        for (const promo of promotions) {
+            const count = await getClientPromotionProgress(clientEmail, promo.targetId, promo.type);
+            const required = promo.requiredCount || 5;
+            const remaining = Math.max(0, required - (count % (required + (promo.freeCount || 1))));
+            const progress = Math.min(count % (required + (promo.freeCount || 1)), required);
+            const pct = Math.round((progress / required) * 100);
+            const earned = Math.floor(count / (required + (promo.freeCount || 1)));
+
+            html += `
+                <div class="promo-card fade-in">
+                    <div class="promo-header">
+                        <div class="promo-icon"><i class="fas fa-gift"></i></div>
+                        <div class="promo-info">
+                            <h4 class="promo-title">${promo.targetName}</h4>
+                            <p class="promo-desc">${promo.description || `Agende ${required}x e ganhe ${promo.freeCount || 1} gratis!`}</p>
+                        </div>
+                    </div>
+                    <div class="promo-progress">
+                        <div class="promo-bar">
+                            <div class="promo-bar-fill" style="width: ${pct}%"></div>
+                        </div>
+                        <div class="promo-stats">
+                            <span>${progress} de ${required}</span>
+                            <span>${remaining > 0 ? `Falta${remaining > 1 ? 'm' : ''} ${remaining}` : 'Resgate disponivel!'}</span>
+                        </div>
+                    </div>
+                    ${earned > 0 ? `<div class="promo-earned"><i class="fas fa-trophy"></i> ${earned} gratis resgatado${earned > 1 ? 's' : ''}!</div>` : ''}
+                </div>`;
+        }
+        containerEl.innerHTML = html;
+    } catch (err) {
+        console.error('Error rendering promotions:', err);
+    }
+}
+
+// ========== BUTTON LOADING STATE ==========
+function btnLoading(btn, loading) {
+    if (!btn) return;
+    if (loading) {
+        btn.dataset.originalText = btn.innerHTML;
+        btn.classList.add('loading');
+        btn.disabled = true;
+    } else {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        if (btn.dataset.originalText) btn.innerHTML = btn.dataset.originalText;
+    }
 }
