@@ -721,6 +721,8 @@ select.form-control {
 }
 .calendar-day.selected.has-booking::after { background: white; }
 .calendar-day.disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+.calendar-day.disabled.no-agenda { opacity: 0.45; cursor: pointer; pointer-events: auto; }
+.calendar-day.disabled.no-agenda:hover { opacity: 0.65; background: rgba(233,30,99,0.06); transform: scale(1.05); }
 
 @media (min-width: 768px) {
     .calendar-header { padding: 16px 0; }
@@ -1042,6 +1044,7 @@ select.form-control {
         bottom: 50%;
         transform: translate(-50%, 50%) scale(0.95);
         opacity: 0;
+        pointer-events: none;
         border-radius: var(--r-xl);
         width: 480px;
         max-height: 80vh;
@@ -1049,9 +1052,84 @@ select.form-control {
     .bottom-sheet.show {
         transform: translate(-50%, 50%) scale(1);
         opacity: 1;
+        pointer-events: auto;
     }
     .bottom-sheet-handle { display: none; }
 }
+
+/* ============================================
+   SEM AGENDA MODAL
+   ============================================ */
+.no-agenda-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0 16px;
+    text-align: center;
+}
+.no-agenda-icon-wrap {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+.no-agenda-glow {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(233,30,99,0.3) 0%, transparent 70%);
+    animation: no-agenda-pulse 2s ease-in-out infinite;
+}
+@keyframes no-agenda-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.25); opacity: 1; }
+}
+.no-agenda-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(233,30,99,0.15), rgba(233,30,99,0.08));
+    border: 2px solid rgba(233,30,99,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: var(--accent);
+    position: relative;
+    z-index: 1;
+}
+.no-agenda-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin-bottom: 6px;
+}
+.no-agenda-sub {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 10px;
+    text-transform: capitalize;
+}
+.no-agenda-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 20px;
+    max-width: 320px;
+}
+.no-agenda-btn {
+    border-radius: var(--r-lg) !important;
+    font-size: 0.95rem !important;
+    padding: 14px !important;
+    background: linear-gradient(135deg, #25d366, #128c4e) !important;
+    border: none !important;
+    gap: 8px;
+}
+.no-agenda-btn:hover { opacity: 0.92; }
 
 /* ============================================
    GESTÃO: Tabs, Stats, Agenda, Lists
@@ -1086,7 +1164,27 @@ select.form-control {
 .tab-content.active { display: block; }
 
 @media (min-width: 768px) {
-    .tabs { padding: 0; }
+    .tabs {
+        padding: 0 40px;
+        max-width: 1200px;
+        margin: 0 auto;
+        width: 100%;
+        box-sizing: border-box;
+        justify-content: flex-start;
+        gap: 4px;
+    }
+    .tab-btn {
+        padding: 12px 18px;
+        font-size: 0.85rem;
+        border-radius: 10px 10px 0 0;
+    }
+    .tab-btn:hover:not(.active) {
+        background: var(--bg-app);
+        color: var(--text-dark);
+    }
+}
+@media (min-width: 1024px) {
+    .tabs { padding: 0 60px; max-width: 1300px; }
 }
 
 .stat-grid {
@@ -1094,6 +1192,13 @@ select.form-control {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
     padding: 16px 20px;
+}
+@media (min-width: 768px) {
+    .stat-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 16px;
+        padding: 20px 0;
+    }
 }
 
 .stat-card {
@@ -1533,84 +1638,113 @@ select.form-control {
 .status-cancelado { background: var(--danger-bg); color: var(--danger); }
 
 /* ============================================
-   AVAILABILITY GRID (admin)
+   AVAILABILITY GRID (admin) — redesigned
    ============================================ */
 .avail-day {
+    border-radius: var(--r-lg);
+    border: 2px solid var(--border-light);
+    margin-bottom: 10px;
+    background: var(--bg-white);
+    transition: all var(--transition);
+    overflow: hidden;
+}
+.avail-day-header {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 14px;
-    border-radius: var(--r-md);
-    border: 1px solid var(--border-light);
-    margin-bottom: 8px;
+    padding: 14px 16px;
     background: var(--bg-white);
-    transition: all var(--transition);
 }
+.avail-day.disabled-day { border-color: var(--border-light); background: var(--bg-app); }
+.avail-day.disabled-day .avail-day-header { background: var(--bg-app); }
+.avail-day:not(.disabled-day) { border-color: rgba(233,30,99,0.2); }
+.avail-day:not(.disabled-day) .avail-day-header { background: rgba(233,30,99,0.03); }
 
-.avail-day.disabled-day { opacity: 0.5; background: var(--bg-app); }
+.avail-day-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    flex: 1;
+}
+.avail-day.disabled-day .avail-day-name { color: var(--text-muted); }
 
 .avail-toggle {
     position: relative;
-    width: 44px;
-    height: 24px;
+    width: 48px;
+    height: 26px;
     flex-shrink: 0;
 }
-
-.avail-toggle input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
+.avail-toggle input { opacity: 0; width: 0; height: 0; }
 .avail-slider {
     position: absolute;
     cursor: pointer;
     inset: 0;
     background: var(--border);
-    border-radius: 24px;
-    transition: 0.3s;
+    border-radius: 26px;
+    transition: 0.25s;
 }
-
 .avail-slider::before {
     content: '';
     position: absolute;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     background: white;
     left: 3px;
     bottom: 3px;
-    transition: 0.3s;
-    box-shadow: var(--shadow-xs);
+    transition: 0.25s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.avail-toggle input:checked + .avail-slider { background: var(--accent); }
+.avail-toggle input:checked + .avail-slider::before { transform: translateX(22px); }
+
+.avail-day-body {
+    padding: 0 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
-.avail-toggle input:checked + .avail-slider { background: var(--accent); }
-.avail-toggle input:checked + .avail-slider::before { transform: translateX(20px); }
-
-.avail-day-name {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-dark);
-    min-width: 60px;
+.avail-section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
 }
 
 .avail-times {
-    display: flex;
-    gap: 6px;
-    flex: 1;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
 }
-
+.avail-time-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.avail-time-group label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
 .avail-time-input {
-    width: 70px;
-    padding: 6px 8px;
-    border: 1px solid var(--border);
-    border-radius: var(--r-sm);
-    font-size: 0.75rem;
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-md);
+    font-size: 0.85rem;
     text-align: center;
     color: var(--text-body);
     background: var(--bg-app);
+    box-sizing: border-box;
+    transition: border-color 0.15s;
 }
+.avail-time-input:focus { outline: none; border-color: var(--accent); background: white; }
+.avail-time-input:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ============================================
    PROFILE AVATAR
@@ -1744,7 +1878,8 @@ select.form-control {
     gap: 16px;
 }
 
-.page-loading .spinner {
+.page-loading .spinner,
+.spinner {
     width: 36px;
     height: 36px;
     border: 3px solid var(--border);

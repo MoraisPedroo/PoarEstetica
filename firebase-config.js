@@ -4,13 +4,13 @@
    ============================================ */
 
 const firebaseConfig = {
-    apiKey: "AIzaSyD0Qtx-7TZkFQpA7YCSMLzmtvuyr_9VfHc",
-    authDomain: "poarestetica.firebaseapp.com",
-    projectId: "poarestetica",
-    storageBucket: "poarestetica.firebasestorage.app",
-    messagingSenderId: "498771078769",
-    appId: "1:498771078769:web:99e773adbc5ff04a0375d0",
-    measurementId: "G-R4V0RYWD4W"
+    apiKey: "AIzaSyAbKlellw9c6LxDBP_u9vanpPcgAd2qEj8",
+    authDomain: "poaresetica.firebaseapp.com",
+    projectId: "poaresetica",
+    storageBucket: "poaresetica.firebasestorage.app",
+    messagingSenderId: "667456908542",
+    appId: "1:667456908542:web:99c8a5aba113dfc921c9af",
+    measurementId: "G-NVJJ8Z76G6"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -104,11 +104,16 @@ async function getProductOrders() {
 }
 
 async function getProductOrdersByClient(email) {
+    // No orderBy here to avoid requiring a composite index. Sort in JS.
     const snap = await db.collection('productOrders')
         .where('clientEmail', '==', email)
-        .orderBy('createdAt', 'desc')
         .get();
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return items.sort((a, b) => {
+        const ta = a.createdAt?.seconds || 0;
+        const tb = b.createdAt?.seconds || 0;
+        return tb - ta;
+    });
 }
 
 async function addProductOrder(data) {
@@ -124,24 +129,29 @@ async function updateProductOrder(id, data) {
 
 // ========== FIRESTORE: BOOKINGS ==========
 async function getBookings() {
-    const snap = await db.collection('bookings').orderBy('date').orderBy('time').get();
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // No orderBy chain to avoid composite index requirement. Sort in JS.
+    const snap = await db.collection('bookings').get();
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return items.sort((a, b) => ((a.date || '') + (a.time || '')).localeCompare((b.date || '') + (b.time || '')));
 }
 
 async function getBookingsByDate(date) {
+    // Only use one where clause to avoid composite index requirement. Filter status in JS.
     const snap = await db.collection('bookings')
         .where('date', '==', date)
-        .where('status', 'in', ['pendente', 'confirmado'])
         .get();
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(b => b.status === 'pendente' || b.status === 'confirmado');
 }
 
 async function getBookingsByClient(email) {
+    // No orderBy here to avoid requiring a composite index. Sort in JS.
     const snap = await db.collection('bookings')
         .where('clientEmail', '==', email)
-        .orderBy('date')
         .get();
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return items.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 }
 
 async function addBooking(data) {
@@ -216,23 +226,27 @@ async function deletePromotion(id) {
 }
 
 async function getClientPromotionProgress(clientEmail, targetId, type) {
+    // Use single where + JS filtering to avoid composite index requirements.
     if (type === 'servico') {
         const snap = await db.collection('bookings')
             .where('clientEmail', '==', clientEmail)
-            .where('serviceId', '==', targetId)
-            .where('status', 'in', ['confirmado', 'pendente'])
             .get();
-        return snap.size;
+        return snap.docs.filter(d => {
+            const x = d.data();
+            return x.serviceId === targetId && (x.status === 'confirmado' || x.status === 'pendente');
+        }).length;
     }
     if (type === 'produto') {
         const snap = await db.collection('productOrders')
             .where('clientEmail', '==', clientEmail)
-            .where('productId', '==', targetId)
-            .where('status', 'in', ['aprovado', 'pendente'])
             .get();
-        // Sum quantities
         let total = 0;
-        snap.docs.forEach(d => { total += (d.data().quantity || 1); });
+        snap.docs.forEach(d => {
+            const x = d.data();
+            if (x.productId === targetId && (x.status === 'aprovado' || x.status === 'pendente')) {
+                total += (x.quantity || 1);
+            }
+        });
         return total;
     }
     return 0;
@@ -278,9 +292,15 @@ function pickAndUploadImage(storagePath) {
 }
 
 // ========== WAHA (WhatsApp) ==========
-const WAHA_URL = "http://136.115.81.162:3000/api/sendText";
+const WAHA_DIRECT_URL = "http://136.115.81.162:3000/api/sendText";
+const WAHA_PROXY_URL = "/api/waha"; // Vercel serverless proxy (HTTPS safe)
 const WAHA_API_KEY = "segredo123";
 const WAHA_SESSION = "default";
+
+// Use proxy on HTTPS (Vercel deploy), direct on HTTP (localhost)
+function getWahaUrl() {
+    return window.location.protocol === 'https:' ? WAHA_PROXY_URL : WAHA_DIRECT_URL;
+}
 
 function getPhoneVariations(rawPhone) {
     let tel = rawPhone.replace(/\D/g, '');
@@ -310,20 +330,22 @@ function removeAccents(str) {
 /**
  * Send WhatsApp message via WAHA.
  * ALWAYS sends to BOTH phone variations (with and without 9).
+ * Uses Vercel proxy when on HTTPS to avoid Mixed Content error.
  */
 async function sendWhatsApp(phone, message) {
     const chatIds = getPhoneVariations(phone);
     const cleanMessage = removeAccents(message);
+    const url = getWahaUrl();
+    const isProxy = url === WAHA_PROXY_URL;
     const results = [];
     // Send to ALL variations — do NOT break on first success
     for (const chatId of chatIds) {
         try {
-            const res = await fetch(WAHA_URL, {
+            const headers = { 'Content-Type': 'application/json' };
+            if (!isProxy) headers['X-Api-Key'] = WAHA_API_KEY;
+            const res = await fetch(url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Api-Key': WAHA_API_KEY
-                },
+                headers,
                 body: JSON.stringify({
                     chatId,
                     text: cleanMessage,
@@ -336,6 +358,59 @@ async function sendWhatsApp(phone, message) {
         }
     }
     return results;
+}
+
+// ========== FIRESTORE: STOCK NOTIFICATIONS ==========
+// Collection to store "notify me when back in stock" requests
+async function addStockNotification(productId, productName, clientName, clientEmail, clientPhone) {
+    return await db.collection('stockNotifications').add({
+        productId, productName, clientName, clientEmail, clientPhone,
+        notified: false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+}
+
+async function getStockNotifications(productId) {
+    const snap = await db.collection('stockNotifications')
+        .where('productId', '==', productId)
+        .where('notified', '==', false)
+        .get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+async function markStockNotified(notifId) {
+    await db.collection('stockNotifications').doc(notifId).update({ notified: true });
+}
+
+// ========== FIRESTORE: REAL-TIME LISTENERS ==========
+function onBookingsChange(callback) {
+    return db.collection('bookings').onSnapshot(snap => {
+        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        data.sort((a, b) => ((a.date || '') + (a.time || '')).localeCompare((b.date || '') + (b.time || '')));
+        callback(data);
+    }, err => console.error('onBookingsChange error:', err));
+}
+
+function onProductOrdersChange(callback) {
+    return db.collection('productOrders').onSnapshot(snap => {
+        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+        callback(data);
+    }, err => console.error('onProductOrdersChange error:', err));
+}
+
+function onServicesChange(callback) {
+    return db.collection('services').orderBy('name').onSnapshot(snap => {
+        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        callback(data);
+    });
+}
+
+function onProductsChange(callback) {
+    return db.collection('products').orderBy('name').onSnapshot(snap => {
+        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        callback(data);
+    });
 }
 
 // ========== SEED DEMO DATA ==========
@@ -365,17 +440,5 @@ async function seedDemoDataIfEmpty() {
             await db.collection('products').add({ ...p, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
         }
     }
-    const avSnap = await db.collection('availability').limit(1).get();
-    if (avSnap.empty) {
-        for (let d = 0; d <= 6; d++) {
-            await db.collection('availability').doc(String(d)).set({
-                enabled: d >= 1 && d <= 6,
-                period: 'ambos',
-                startTime: '08:00',
-                endTime: '18:00',
-                lunchStart: '12:00',
-                lunchEnd: '13:00'
-            });
-        }
-    }
+    // Availability is NOT auto-seeded — admin must configure days/hours manually.
 }

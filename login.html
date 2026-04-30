@@ -6,12 +6,71 @@
     <title>Entrar - Poar Estetica</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .header-logo-edit-badge {
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
+            background: var(--accent, #e91e63);
+            color: #fff;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            cursor: pointer;
+            border: 2px solid var(--bg, #fff);
+            z-index: 2;
+            transition: transform 0.15s;
+        }
+        .header-logo-edit-badge:hover { transform: scale(1.15); }
+        .header-logo { position: relative; }
+        .header-logo img.logo-custom-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: inherit;
+        }
+        .logo-edit-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 16px;
+            background: var(--bg-card, #fff);
+            border: 2px solid var(--border-light, #eee);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent, #e91e63);
+            overflow: hidden;
+        }
+        .logo-edit-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .logo-edit-options { display: flex; flex-direction: column; gap: 12px; }
+        .logo-edit-row { display: flex; gap: 8px; align-items: center; }
+        .logo-edit-row label { min-width: 90px; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+        .logo-edit-row select, .logo-edit-row input[type="text"] {
+            flex: 1;
+            padding: 8px 10px;
+            border: 1px solid var(--border-light, #ddd);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: var(--bg, #fff);
+        }
+    </style>
 </head>
 <body>
     <div class="app-shell">
         <header class="top-header">
             <a href="index.html" class="header-brand">
-                <div class="header-logo">P</div>
+                <div class="header-logo" id="header-logo-container">P</div>
                 <div><h1 class="header-title">Poar</h1><p class="header-subtitle">Estetica</p></div>
             </a>
             <nav class="desktop-nav">
@@ -119,9 +178,9 @@
                     <input type="password" class="form-control" id="reg-password" placeholder="Minimo 6 caracteres" required minlength="6">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Telefone (WhatsApp) <span class="text-xs text-muted">— opcional</span></label>
-                    <input type="tel" class="form-control" id="reg-phone" placeholder="(00) 00000-0000">
-                    <p class="form-hint">Se informar agora, ja preenchemos automaticamente nos agendamentos.</p>
+                    <label class="form-label">Telefone (WhatsApp) <span class="text-xs" style="color:var(--accent, #e91e63);">*</span></label>
+                    <input type="tel" class="form-control" id="reg-phone" placeholder="(00) 00000-0000" required>
+                    <p class="form-hint">Numero necessario para receber notificacoes e lembretes via WhatsApp.</p>
                 </div>
                 <button type="submit" class="btn btn-primary btn-full btn-lg" id="btn-register">
                     <i class="fas fa-user-plus"></i> Criar conta
@@ -152,6 +211,56 @@
             </form>
         </div>
 
+        <!-- ===== MODAL: Editar Logo (Admin) ===== -->
+        <div class="modal-overlay" id="logoedit-overlay" onclick="closeLogoEditModal()"></div>
+        <div class="bottom-sheet" id="logoedit-sheet">
+            <div class="bottom-sheet-handle"></div>
+            <div class="flex items-center justify-between mb-16">
+                <h3 class="bottom-sheet-title" style="margin-bottom:0;">Editar Logo</h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeLogoEditModal()" style="color:var(--text-muted);"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="text-align:center;">
+                <div class="logo-edit-preview" id="logo-edit-preview">P</div>
+            </div>
+            <div class="logo-edit-options" style="text-align:left;">
+                <div class="form-group">
+                    <label class="form-label">Imagem do logo</label>
+                    <button class="btn btn-outline btn-sm btn-full" id="btn-upload-logo" onclick="uploadLogoImage()">
+                        <i class="fas fa-upload"></i> Enviar imagem
+                    </button>
+                    <p class="form-hint">Envia uma imagem para substituir a letra do logo.</p>
+                    <input type="hidden" id="logo-edit-image-url">
+                    <button class="btn btn-ghost btn-sm mt-8 hidden" id="btn-remove-logo-img" onclick="removeLogoImage()" style="color:var(--danger,red);font-size:0.8rem;">
+                        <i class="fas fa-trash"></i> Remover imagem
+                    </button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Texto do logo</label>
+                    <input type="text" class="form-control" id="logo-edit-text" placeholder="Ex: P, Poar, etc." maxlength="10">
+                    <p class="form-hint">Texto exibido quando nao ha imagem. Padrao: P</p>
+                </div>
+                <div class="logo-edit-row">
+                    <label>Tamanho</label>
+                    <select id="logo-edit-fontsize">
+                        <option value="small">Pequeno</option>
+                        <option value="medium" selected>Medio</option>
+                        <option value="large">Grande</option>
+                    </select>
+                </div>
+                <div class="logo-edit-row">
+                    <label>Estilo</label>
+                    <select id="logo-edit-fontstyle">
+                        <option value="normal">Normal</option>
+                        <option value="bold">Negrito</option>
+                        <option value="italic">Italico</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary btn-full btn-lg mt-16" id="btn-save-logo" onclick="saveLogoConfig()">
+                    <i class="fas fa-save"></i> Salvar logo
+                </button>
+            </div>
+        </div>
+
         <nav class="bottom-nav">
             <a href="index.html" class="nav-btn"><i class="fas fa-home"></i><span>Inicio</span></a>
             <a href="agendar.html" class="nav-btn"><i class="far fa-calendar-plus"></i><span>Agendar</span></a>
@@ -169,6 +278,146 @@
     <script src="firebase-config.js"></script>
     <script src="app.js"></script>
     <script>
+        // ===== LOGO CONFIG HELPERS =====
+        const FONT_SIZE_MAP = { small: '0.85rem', medium: '1.1rem', large: '1.5rem' };
+
+        function applyLogoToElement(el, config) {
+            if (!el || !config) return;
+            // Clear existing content but keep edit badge if present
+            const existingBadge = el.querySelector('.header-logo-edit-badge');
+            el.innerHTML = '';
+
+            if (config.logoImage) {
+                const img = document.createElement('img');
+                img.src = config.logoImage;
+                img.alt = 'Logo';
+                img.className = 'logo-custom-img';
+                el.appendChild(img);
+            } else {
+                const text = config.logoText || 'P';
+                el.textContent = text;
+                el.style.fontSize = FONT_SIZE_MAP[config.logoFontSize] || FONT_SIZE_MAP.medium;
+                if (config.logoFontStyle === 'bold') {
+                    el.style.fontWeight = '700';
+                    el.style.fontStyle = 'normal';
+                } else if (config.logoFontStyle === 'italic') {
+                    el.style.fontStyle = 'italic';
+                    el.style.fontWeight = '600';
+                } else {
+                    el.style.fontWeight = '600';
+                    el.style.fontStyle = 'normal';
+                }
+            }
+
+            // Re-append edit badge if it was there
+            if (existingBadge) el.appendChild(existingBadge);
+        }
+
+        function addAdminEditBadge(el) {
+            if (!el || el.querySelector('.header-logo-edit-badge')) return;
+            const badge = document.createElement('span');
+            badge.className = 'header-logo-edit-badge';
+            badge.innerHTML = '<i class="fas fa-pen"></i>';
+            badge.title = 'Editar logo';
+            badge.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                openLogoEditModal();
+            };
+            el.appendChild(badge);
+        }
+
+        function updateLogoEditPreview() {
+            const preview = document.getElementById('logo-edit-preview');
+            if (!preview) return;
+            const imageUrl = document.getElementById('logo-edit-image-url').value;
+            const text = document.getElementById('logo-edit-text').value || 'P';
+            const fontSize = document.getElementById('logo-edit-fontsize').value;
+            const fontStyle = document.getElementById('logo-edit-fontstyle').value;
+            applyLogoToElement(preview, {
+                logoImage: imageUrl || '',
+                logoText: text,
+                logoFontSize: fontSize,
+                logoFontStyle: fontStyle
+            });
+        }
+
+        // ===== LOGO EDIT MODAL =====
+        function openLogoEditModal() {
+            // Load current config into modal
+            (async () => {
+                try {
+                    const config = await getSiteConfig();
+                    document.getElementById('logo-edit-image-url').value = config.logoImage || '';
+                    document.getElementById('logo-edit-text').value = config.logoText || 'P';
+                    document.getElementById('logo-edit-fontsize').value = config.logoFontSize || 'medium';
+                    document.getElementById('logo-edit-fontstyle').value = config.logoFontStyle || 'normal';
+                    // Show/hide remove image button
+                    document.getElementById('btn-remove-logo-img').classList.toggle('hidden', !config.logoImage);
+                    updateLogoEditPreview();
+                } catch(e) {
+                    console.error('Erro ao carregar config do logo:', e);
+                }
+            })();
+            openModal('logoedit-overlay', 'logoedit-sheet');
+        }
+
+        function closeLogoEditModal() { closeModal('logoedit-overlay', 'logoedit-sheet'); }
+
+        async function uploadLogoImage() {
+            try {
+                showToast('Selecione uma imagem...', '');
+                const url = await pickAndUploadImage('site/logo_' + Date.now());
+                document.getElementById('logo-edit-image-url').value = url;
+                document.getElementById('btn-remove-logo-img').classList.remove('hidden');
+                updateLogoEditPreview();
+                showToast('Imagem enviada!', 'success');
+            } catch(e) {
+                if (e.message !== 'Nenhum arquivo selecionado') showToast('Erro ao enviar imagem', 'error');
+            }
+        }
+
+        function removeLogoImage() {
+            document.getElementById('logo-edit-image-url').value = '';
+            document.getElementById('btn-remove-logo-img').classList.add('hidden');
+            updateLogoEditPreview();
+        }
+
+        async function saveLogoConfig() {
+            const btn = document.getElementById('btn-save-logo');
+            const data = {
+                logoImage: document.getElementById('logo-edit-image-url').value || '',
+                logoText: document.getElementById('logo-edit-text').value.trim() || 'P',
+                logoFontSize: document.getElementById('logo-edit-fontsize').value,
+                logoFontStyle: document.getElementById('logo-edit-fontstyle').value
+            };
+
+            btnLoading(btn, true);
+            try {
+                await updateSiteConfig(data);
+                // Apply to header logo immediately
+                const headerLogo = document.getElementById('header-logo-container');
+                applyLogoToElement(headerLogo, data);
+                // Re-add admin badge
+                const user = getProfile();
+                if (user && user.role === 'gestao') {
+                    addAdminEditBadge(headerLogo);
+                }
+                closeLogoEditModal();
+                showToast('Logo atualizado!', 'success');
+            } catch(e) {
+                showToast('Erro ao salvar logo', 'error');
+            } finally {
+                btnLoading(btn, false);
+            }
+        }
+
+        // Attach live preview listeners
+        document.getElementById('logo-edit-text')?.addEventListener('input', updateLogoEditPreview);
+        document.getElementById('logo-edit-fontsize')?.addEventListener('change', updateLogoEditPreview);
+        document.getElementById('logo-edit-fontstyle')?.addEventListener('change', updateLogoEditPreview);
+
+        // ===== MAIN INIT =====
         document.addEventListener('DOMContentLoaded', async () => {
             applyPhoneMask(document.getElementById('reg-phone'));
             applyPhoneMask(document.getElementById('edit-phone'));
@@ -176,6 +425,22 @@
             // Wait for auth to resolve
             const user = await initAuth();
             updateNavState();
+
+            // Load siteConfig and apply logo
+            try {
+                const siteConfig = await getSiteConfig();
+                const headerLogo = document.getElementById('header-logo-container');
+                if (siteConfig && (siteConfig.logoImage || siteConfig.logoText || siteConfig.logoFontSize || siteConfig.logoFontStyle)) {
+                    applyLogoToElement(headerLogo, siteConfig);
+                }
+                // If admin, show edit badge on header logo
+                const profile = user ? getProfile() : null;
+                if (profile && profile.role === 'gestao') {
+                    addAdminEditBadge(headerLogo);
+                }
+            } catch(e) {
+                console.error('Erro ao carregar config do site:', e);
+            }
 
             // Hide loader
             document.getElementById('page-loader').classList.add('hidden');
@@ -241,6 +506,13 @@
                 return;
             }
 
+            // Validate phone — mandatory, minimum 10 digits
+            const phoneDigits = phone.replace(/\D/g, '');
+            if (!phone || phoneDigits.length < 10) {
+                showToast('Informe um telefone valido com pelo menos 10 digitos (DDD + numero).', 'error');
+                return;
+            }
+
             btnLoading(btn, true);
 
             try {
@@ -294,59 +566,117 @@
             }
 
             // Admin link
-            if (user.role === 'gestao') {
+            const isAdminUser = user.role === 'gestao';
+            if (isAdminUser) {
                 document.getElementById('profile-gestao-link').classList.remove('hidden');
+                // Ensure admin edit badge is on header logo
+                const headerLogo = document.getElementById('header-logo-container');
+                addAdminEditBadge(headerLogo);
+                // Hide booking + promotions sections for admin
+                document.getElementById('profile-bookings').classList.add('hidden');
+                document.getElementById('profile-promotions').classList.add('hidden');
+                return;
             }
+            // Show sections for clients (in case they were hidden previously)
+            document.getElementById('profile-bookings').classList.remove('hidden');
+            document.getElementById('profile-promotions').classList.remove('hidden');
 
-            // Load async data
+            // Load async data (clients only)
             loadProfileBookings(user);
             loadProfilePromotions(user);
         }
 
         async function loadProfileBookings(user) {
             const container = document.getElementById('profile-bookings');
+            container.innerHTML = '<div style="text-align:center;padding:16px 0;"><div class="spinner" style="margin:0 auto;"></div></div>';
             try {
                 const today = new Date().toISOString().split('T')[0];
                 const bookings = await getBookingsByClient(user.email);
-                const active = bookings.filter(b => b.date >= today && b.status !== 'cancelado');
+                // Show upcoming + pending, and past confirmed (last 30 days)
+                const past30 = new Date(); past30.setDate(past30.getDate() - 30);
+                const past30Str = past30.toISOString().split('T')[0];
+                const relevant = bookings.filter(b => b.date >= past30Str && b.status !== 'cancelado');
+                const sorted = relevant.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 
-                if (active.length === 0) {
-                    container.innerHTML = '<p class="text-sm text-muted text-center" style="padding:12px 0;"><i class="far fa-calendar"></i> Nenhum agendamento ativo</p>';
+                if (sorted.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align:center;padding:20px 0;">
+                            <i class="far fa-calendar-xmark" style="font-size:2rem;color:var(--text-muted);opacity:0.4;"></i>
+                            <p class="text-sm text-muted mt-8">Nenhum agendamento ainda 📅</p>
+                            <a href="agendar.html" class="btn btn-primary btn-sm mt-12">Agendar agora</a>
+                        </div>`;
                 } else {
                     container.innerHTML = `
                         <p class="text-xs fw-600 text-muted mb-12" style="text-transform:uppercase;">Seus agendamentos</p>
                         <div class="stagger-in">
-                        ${active.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time)).map(b => {
+                        ${sorted.map(b => {
                             const statusClass = 'status-' + b.status;
-                            const statusLabel = b.status === 'pendente' ? 'Pendente' : b.status === 'confirmado' ? 'Confirmado' : b.status;
+                            const statusLabel = b.status === 'pendente' ? 'Aguardando' : b.status === 'confirmado' ? 'Confirmado' : b.status;
+                            const isPending = b.status === 'pendente' && b.date >= today;
                             return `
-                                <div class="flex items-center gap-12" style="padding:8px 0;border-bottom:1px solid var(--border-light);">
-                                    <div style="min-width:50px;">
+                                <div class="flex items-center gap-12" style="padding:10px 0;border-bottom:1px solid var(--border-light);">
+                                    <div style="min-width:52px;text-align:center;">
                                         <p class="text-sm fw-700" style="color:var(--accent);">${b.time}</p>
                                         <p class="text-xs text-muted">${formatDateShort(b.date)}</p>
                                     </div>
                                     <div style="flex:1;">
                                         <p class="text-sm fw-600">${b.serviceName}</p>
-                                        <p class="text-xs text-muted">${b.duration}min</p>
+                                        <p class="text-xs text-muted"><i class="far fa-clock"></i> ${b.duration}min</p>
                                     </div>
-                                    <span class="status-badge ${statusClass}">${statusLabel}</span>
+                                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                                        <span class="status-badge ${statusClass}">${statusLabel}</span>
+                                        ${isPending ? `<button class="btn btn-ghost btn-sm" style="font-size:0.7rem;color:var(--danger);padding:2px 6px;" onclick="cancelMyBooking('${b.id}')"><i class="fas fa-times"></i> Cancelar</button>` : ''}
+                                    </div>
                                 </div>`;
                         }).join('')}
                         </div>`;
                 }
             } catch(e) {
-                container.innerHTML = '<p class="text-sm text-muted text-center">Erro ao carregar.</p>';
+                console.error('loadProfileBookings error:', e);
+                container.innerHTML = `
+                    <div style="text-align:center;padding:20px 0;">
+                        <i class="far fa-calendar-xmark" style="font-size:2rem;color:var(--text-muted);opacity:0.4;"></i>
+                        <p class="text-sm text-muted mt-8">Nenhum agendamento ainda 📅</p>
+                        <a href="agendar.html" class="btn btn-primary btn-sm mt-12">Agendar agora</a>
+                    </div>`;
+            }
+        }
+
+        async function cancelMyBooking(bookingId) {
+            if (!confirm('Deseja cancelar este agendamento?')) return;
+            try {
+                await updateBookingStatus(bookingId, 'cancelado', 'Cancelado pelo cliente');
+                showToast('Agendamento cancelado.', 'success');
+                const user = getProfile();
+                if (user) loadProfileBookings(user);
+            } catch(e) {
+                showToast('Erro ao cancelar: ' + e.message, 'error');
             }
         }
 
         async function loadProfilePromotions(user) {
             if (user.role === 'gestao') return;
+            const container = document.getElementById('profile-promotions');
+            if (!container) return;
             try {
                 const promos = await getPromotions();
-                if (promos.length > 0) {
-                    await renderClientPromotions(document.getElementById('profile-promotions'), user.email);
+                if (promos.length === 0) {
+                    container.innerHTML = '';
+                    return;
                 }
-            } catch(e) { console.error(e); }
+                // Create sub-container so renderClientPromotions doesn't overwrite our heading
+                container.innerHTML = `
+                    <div class="card">
+                        <p class="text-xs fw-600 text-muted mb-12" style="text-transform:uppercase;">
+                            <i class="fas fa-gift" style="color:var(--accent);"></i> Promoc&otilde;es Ativas
+                        </p>
+                        <div id="profile-promotions-inner"></div>
+                    </div>`;
+                await renderClientPromotions(document.getElementById('profile-promotions-inner'), user.email);
+            } catch(e) {
+                console.error('loadProfilePromotions error:', e);
+                container.innerHTML = '';
+            }
         }
 
         // ===== EDIT PROFILE MODAL =====

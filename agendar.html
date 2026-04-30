@@ -91,6 +91,27 @@
             <div id="confirm-content"></div>
         </div>
 
+        <!-- MODAL: Sem Agenda -->
+        <div class="modal-overlay" id="noagenda-overlay" onclick="closeNoAgendaModal()"></div>
+        <div class="bottom-sheet" id="noagenda-sheet">
+            <div class="bottom-sheet-handle"></div>
+            <button class="btn btn-ghost btn-sm" onclick="closeNoAgendaModal()" style="position:absolute;top:16px;right:16px;color:var(--text-muted);z-index:2;"><i class="fas fa-times"></i></button>
+            <div class="no-agenda-body">
+                <div class="no-agenda-icon-wrap">
+                    <div class="no-agenda-glow"></div>
+                    <div class="no-agenda-icon"><i class="far fa-calendar-xmark"></i></div>
+                </div>
+                <h3 class="no-agenda-title">Sem agenda disponível</h3>
+                <p class="no-agenda-sub" id="noagenda-date-label"></p>
+                <p class="no-agenda-desc">Este dia ainda não tem horários configurados. Deseja receber um aviso pelo WhatsApp quando abrirmos agenda para esta data?</p>
+                <div id="noagenda-alert-status"></div>
+                <button class="btn btn-primary btn-full no-agenda-btn" id="noagenda-alert-btn" onclick="subscribeAgendaAlert()">
+                    <i class="fab fa-whatsapp"></i> Quero ser avisado!
+                </button>
+                <p class="text-xs text-muted" style="margin-top:12px;text-align:center;">Só enviaremos um aviso quando os horários deste dia forem liberados.</p>
+            </div>
+        </div>
+
         <nav class="bottom-nav">
             <a href="index.html" class="nav-btn"><i class="fas fa-home"></i><span>Inicio</span></a>
             <a href="agendar.html" class="nav-btn active"><i class="far fa-calendar-plus"></i><span>Agendar</span></a>
@@ -128,6 +149,7 @@
 
             await initAuth();
             updateNavState();
+            applyLogoConfig();
 
             // Load data in parallel
             try {
@@ -227,7 +249,12 @@
                 if (isPast || !dayEnabled || isBlocked) classes += ' disabled';
 
                 const clickable = !isPast && dayEnabled && !isBlocked;
-                html += `<div class="${classes}" ${clickable ? `onclick="openDay('${dateStr}', ${dow})"` : ''}>${d}</div>`;
+                const noAgendaClickable = !isPast && !dayEnabled && !isBlocked;
+                if (noAgendaClickable) classes += ' no-agenda';
+                let onclick = '';
+                if (clickable) onclick = `onclick="openDay('${dateStr}', ${dow})"`;
+                else if (noAgendaClickable) onclick = `onclick="openNoAgendaModal('${dateStr}')"`;
+                html += `<div class="${classes}" ${onclick}>${d}</div>`;
             }
 
             const totalCells = firstDay + daysInMonth;
@@ -275,6 +302,69 @@
         }
 
         function closeDayModal() { closeModal('day-overlay', 'day-sheet'); }
+
+        // ===== SEM AGENDA MODAL =====
+        let noAgendaDate = null;
+
+        function openNoAgendaModal(dateStr) {
+            noAgendaDate = dateStr;
+            const date = new Date(dateStr + 'T12:00:00');
+            const label = date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+            document.getElementById('noagenda-date-label').textContent =
+                label.charAt(0).toUpperCase() + label.slice(1);
+
+            // Reset state
+            const statusEl = document.getElementById('noagenda-alert-status');
+            const btn = document.getElementById('noagenda-alert-btn');
+            statusEl.innerHTML = '';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fab fa-whatsapp"></i> Quero ser avisado!';
+
+            // If not logged in, change button
+            const user = getProfile();
+            if (!user) {
+                btn.innerHTML = '<i class="far fa-user"></i> Entre para ser avisado';
+                btn.onclick = () => { window.location.href = 'login.html'; };
+            } else {
+                btn.onclick = subscribeAgendaAlert;
+            }
+
+            openModal('noagenda-overlay', 'noagenda-sheet');
+        }
+
+        function closeNoAgendaModal() { closeModal('noagenda-overlay', 'noagenda-sheet'); }
+
+        async function subscribeAgendaAlert() {
+            const user = getProfile();
+            if (!user) { window.location.href = 'login.html'; return; }
+            if (!user.phone) {
+                showToast('Adicione seu WhatsApp no perfil para receber alertas.', 'error');
+                return;
+            }
+            const btn = document.getElementById('noagenda-alert-btn');
+            const statusEl = document.getElementById('noagenda-alert-status');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+            try {
+                await db.collection('agendaAlerts').add({
+                    date: noAgendaDate,
+                    clientEmail: user.email,
+                    clientName: user.name || '',
+                    clientPhone: user.phone,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                btn.innerHTML = '<i class="fas fa-check"></i> Aviso registrado!';
+                btn.style.background = 'var(--success, #4caf50)';
+                statusEl.innerHTML = `<div style="background:rgba(76,175,80,0.1);border:1px solid rgba(76,175,80,0.3);border-radius:8px;padding:8px 12px;margin-bottom:12px;text-align:center;">
+                    <i class="fab fa-whatsapp" style="color:#25d366;"></i>
+                    <span class="text-sm" style="color:#2e7d32;"> Você será avisado em ${user.phone} quando abrirmos horários para este dia!</span>
+                </div>`;
+            } catch(e) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fab fa-whatsapp"></i> Quero ser avisado!';
+                showToast('Erro ao registrar alerta: ' + e.message, 'error');
+            }
+        }
 
         function openTimeServices(time) {
             selectedTime = time;
@@ -361,16 +451,23 @@
                         </div>
                     </div>
 
-                    ${!existingPhone ? `
                     <div class="form-group" style="text-align:left;">
                         <label class="form-label">Telefone para contato (WhatsApp)</label>
+                        ${existingPhone ? `
+                        <div id="phone-display" class="flex items-center justify-between mb-8">
+                            <p class="text-sm fw-600 mb-0"><i class="fab fa-whatsapp" style="color:#25d366;"></i> ${existingPhone}</p>
+                            <button class="btn btn-ghost btn-sm" style="color:var(--accent); font-size:0.8rem;" onclick="document.getElementById('phone-display').style.display='none'; document.getElementById('phone-edit').style.display='block';">
+                                <i class="fas fa-pen"></i> Editar
+                            </button>
+                        </div>
+                        <div id="phone-edit" style="display:none;">
+                            <input type="tel" class="form-control" id="confirm-phone" value="${existingPhone}" placeholder="(00) 00000-0000">
+                        </div>
+                        ` : `
                         <input type="tel" class="form-control" id="confirm-phone" placeholder="(00) 00000-0000">
+                        `}
                         <p class="form-hint">A confirmacao sera enviada para este numero.</p>
-                    </div>` : `
-                    <div class="card mb-16" style="text-align:left; background:var(--bg-app);">
-                        <p class="text-xs text-muted mb-4">Confirmacao sera enviada para:</p>
-                        <p class="text-sm fw-600"><i class="fab fa-whatsapp" style="color:#25d366;"></i> ${existingPhone}</p>
-                    </div>`}
+                    </div>
 
                     <div class="card mb-16" style="background:var(--warning-bg); text-align:left;">
                         <p class="text-xs" style="color:var(--warning);"><i class="fas fa-info-circle"></i> Apos confirmar, seu agendamento ficara <strong>pendente de aprovacao</strong>. Voce recebera uma confirmacao por WhatsApp assim que for aprovado.</p>

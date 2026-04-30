@@ -225,12 +225,16 @@
             <div class="tab-content" id="tab-disponibilidade">
                 <div class="page-padding">
                     <div class="card mb-16">
-                        <h3 style="font-size:0.95rem;font-weight:700;color:var(--text-dark);margin-bottom:6px;">
-                            <i class="fas fa-calendar-week" style="color:var(--accent);"></i> Horarios de Atendimento
-                        </h3>
-                        <p class="text-xs text-muted mb-16">Configure os dias e horarios em que voce estara disponivel para atendimentos.</p>
-                        <div id="availability-grid"></div>
-                        <button class="btn btn-primary btn-full mt-16" onclick="saveAvailability()"><i class="fas fa-save"></i> Salvar Horarios</button>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                            <h3 style="font-size:0.95rem;font-weight:700;color:var(--text-dark);">
+                                <i class="fas fa-calendar-week" style="color:var(--accent);"></i> Horarios de Atendimento
+                            </h3>
+                        </div>
+                        <p class="text-xs text-muted mb-16">Ative os dias que voce atende e configure os horarios. Clientes so poderao agendar nos dias e horarios configurados.</p>
+                        <div id="availability-grid"><div style="text-align:center;padding:20px;"><div class="spinner" style="margin:0 auto;"></div></div></div>
+                        <button class="btn btn-primary btn-full mt-16" onclick="saveAvailability()" style="border-radius:12px;">
+                            <i class="fas fa-check-circle"></i> Salvar configuracoes
+                        </button>
                     </div>
 
                     <div class="card">
@@ -321,7 +325,10 @@
                 <div class="page-padding">
                     <div class="form-group">
                         <label class="form-label">Filtrar por data</label>
-                        <input type="date" class="form-control" id="agenda-date-filter" onchange="renderAgenda()">
+                        <div class="flex gap-8" style="align-items:center;">
+                            <input type="date" class="form-control" id="agenda-date-filter" onchange="renderAgenda()" style="flex:1;">
+                            <button class="btn btn-outline btn-sm" onclick="document.getElementById('agenda-date-filter').value=''; renderAgenda();" title="Limpar filtro"><i class="fas fa-times"></i> Limpar filtro</button>
+                        </div>
                     </div>
                     <div id="agenda-list"></div>
                 </div>
@@ -339,6 +346,23 @@
                 <div class="flex gap-8">
                     <button class="btn btn-outline" style="flex:1;" onclick="closeDeleteModal()">Cancelar</button>
                     <button class="btn btn-danger" style="flex:1;" onclick="confirmDelete()"><i class="fas fa-trash-alt"></i> Excluir</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cancel booking modal (with reason + WhatsApp) -->
+        <div class="modal-overlay" id="cancel-booking-overlay" onclick="closeCancelBookingModal()"></div>
+        <div class="bottom-sheet" id="cancel-booking-sheet">
+            <div class="bottom-sheet-handle"></div>
+            <div>
+                <h3 class="bottom-sheet-title" style="margin-bottom:6px;"><i class="fas fa-calendar-times" style="color:var(--danger);"></i> Cancelar Agendamento</h3>
+                <p class="text-xs text-muted mb-12">Informe o motivo do cancelamento. O cliente sera notificado via WhatsApp.</p>
+                <div class="cancel-reason-group">
+                    <textarea id="cancel-booking-reason" rows="3" placeholder="Ex: Necessidade de remarcacao, imprevisto..."></textarea>
+                </div>
+                <div class="flex gap-8 mt-16">
+                    <button class="btn btn-outline" style="flex:1;" onclick="closeCancelBookingModal()">Voltar</button>
+                    <button class="btn btn-danger" style="flex:1;" onclick="confirmCancelBooking()"><i class="fas fa-times"></i> Cancelar Agendamento</button>
                 </div>
             </div>
         </div>
@@ -491,9 +515,11 @@
             if (!isAdmin()) { window.location.href = 'login.html'; return; }
 
             document.getElementById('gestao-user-name').textContent = getProfile().name || getProfile().email.split('@')[0];
-            document.getElementById('agenda-date-filter').value = new Date().toISOString().split('T')[0];
+            document.getElementById('agenda-date-filter').value = '';
+            applyLogoConfig();
 
             await refreshAll();
+            setupRealtimeListeners();
         });
 
         function switchTab(name, btn) {
@@ -523,6 +549,41 @@
             renderPendingOrders();
             renderPromotionFormSelects();
             renderPromotionsList();
+        }
+
+        function getActiveTab() {
+            const active = document.querySelector('.tab-content.active');
+            return active ? active.id.replace('tab-', '') : 'dashboard';
+        }
+
+        function rerenderActiveTab() {
+            const tab = getActiveTab();
+            renderDashboard();
+            if (tab === 'agenda') renderAgenda();
+            if (tab === 'servicos') renderServicesList();
+            if (tab === 'produtos') renderProductsList();
+            if (tab === 'aprovacoes') { renderPendingBookings(); renderPendingOrders(); }
+            if (tab === 'disponibilidade') { renderAvailability(); renderBlockedDates(); }
+            if (tab === 'promocoes') { renderPromotionFormSelects(); renderPromotionsList(); }
+        }
+
+        function setupRealtimeListeners() {
+            onBookingsChange(data => {
+                cachedBookings = data;
+                rerenderActiveTab();
+            });
+            onProductOrdersChange(data => {
+                cachedOrders = data;
+                rerenderActiveTab();
+            });
+            onServicesChange(data => {
+                cachedServices = data;
+                rerenderActiveTab();
+            });
+            onProductsChange(data => {
+                cachedProducts = data;
+                rerenderActiveTab();
+            });
         }
 
         // ===== DASHBOARD =====
@@ -648,7 +709,7 @@
                         <div style="flex:1;">
                             <div class="fw-600 text-sm">${o.productName || 'Produto'}</div>
                             <div class="text-xs text-muted">Cliente: ${o.clientName || o.clientEmail}</div>
-                            <div class="text-xs text-muted">Qtd: ${o.quantity || 1} · R$ ${fmtPrice((o.price || 0) * (o.quantity || 1))}</div>
+                            <div class="text-xs text-muted">Qtd: ${o.quantity || 1} · R$ ${fmtPrice(o.totalPrice || (o.unitPrice || o.price || 0) * (o.quantity || 1))}</div>
                             <div class="text-xs text-muted"><i class="fab fa-whatsapp" style="color:#25d366;"></i> ${o.clientPhone || 'Nao informado'}</div>
                             ${stockInfo ? `<div class="text-xs text-muted mt-4">${stockInfo}</div>` : ''}
                         </div>
@@ -1075,28 +1136,56 @@
                 const config = availabilityData[String(i)] || { enabled: false, period: 'ambos', startTime: '08:00', endTime: '18:00', lunchStart: '12:00', lunchEnd: '13:00' };
                 const disabledClass = config.enabled ? '' : 'disabled-day';
                 const currentPeriod = config.period || 'ambos';
+                const dis = !config.enabled ? 'disabled' : '';
+                const disOp = !config.enabled ? 'opacity:0.4;pointer-events:none;' : '';
                 return `
                     <div class="avail-day ${disabledClass}" id="avail-day-${i}">
-                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-                            <label class="avail-toggle">
+                        <div class="avail-day-header">
+                            <div class="avail-day-icon" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;letter-spacing:0.02em;background:${config.enabled ? 'rgba(233,30,99,0.1)' : 'var(--border-light)'};color:${config.enabled ? 'var(--accent)' : 'var(--text-muted)'};">${name.substring(0,3).toUpperCase()}</div>
+                            <div class="avail-day-name">${name}</div>
+                            ${config.enabled ? '<span class="status-badge status-confirmado" style="font-size:0.65rem;">Ativo</span>' : '<span class="status-badge" style="font-size:0.65rem;background:var(--border-light);color:var(--text-muted);">Inativo</span>'}
+                            <label class="avail-toggle" style="margin-left:4px;">
                                 <input type="checkbox" ${config.enabled ? 'checked' : ''} onchange="toggleAvailDay(${i}, this.checked)">
                                 <span class="avail-slider"></span>
                             </label>
-                            <div class="avail-day-name" style="min-width:60px;">${name}</div>
-                            <div class="period-selector" id="period-selector-${i}" style="${!config.enabled ? 'opacity:0.4;pointer-events:none;' : ''}">
-                                <button type="button" class="period-btn ${currentPeriod === 'manha' ? 'active' : ''}" onclick="setPeriod(${i}, 'manha')">Manha</button>
-                                <button type="button" class="period-btn ${currentPeriod === 'tarde' ? 'active' : ''}" onclick="setPeriod(${i}, 'tarde')">Tarde</button>
-                                <button type="button" class="period-btn ${currentPeriod === 'ambos' ? 'active' : ''}" onclick="setPeriod(${i}, 'ambos')">Ambos</button>
-                            </div>
                         </div>
-                        <div class="avail-times" id="avail-times-${i}" style="${!config.enabled ? 'opacity:0.4;pointer-events:none;' : ''}">
-                            <input type="time" class="avail-time-input" value="${config.startTime || '08:00'}" id="avail-start-${i}" title="Inicio" ${!config.enabled ? 'disabled' : ''}>
-                            <span class="text-xs text-muted" style="align-self:center;">ate</span>
-                            <input type="time" class="avail-time-input" value="${config.endTime || '18:00'}" id="avail-end-${i}" title="Fim" ${!config.enabled ? 'disabled' : ''}>
-                            <span class="text-xs text-muted" style="align-self:center;">Almoco:</span>
-                            <input type="time" class="avail-time-input" value="${config.lunchStart || '12:00'}" id="avail-lunch-s-${i}" title="Almoco inicio" ${!config.enabled ? 'disabled' : ''}>
-                            <span class="text-xs text-muted" style="align-self:center;">-</span>
-                            <input type="time" class="avail-time-input" value="${config.lunchEnd || '13:00'}" id="avail-lunch-e-${i}" title="Almoco fim" ${!config.enabled ? 'disabled' : ''}>
+                        <div id="avail-body-${i}" style="${disOp}">
+                            <div class="avail-day-body">
+                                <div>
+                                    <div class="avail-section-label">Periodo de atendimento</div>
+                                    <div class="period-selector" id="period-selector-${i}">
+                                        <button type="button" class="period-btn ${currentPeriod === 'manha' ? 'active' : ''}" onclick="setPeriod(${i}, 'manha')"><i class="fas fa-sun"></i> Manha</button>
+                                        <button type="button" class="period-btn ${currentPeriod === 'tarde' ? 'active' : ''}" onclick="setPeriod(${i}, 'tarde')"><i class="fas fa-cloud-sun"></i> Tarde</button>
+                                        <button type="button" class="period-btn ${currentPeriod === 'ambos' ? 'active' : ''}" onclick="setPeriod(${i}, 'ambos')"><i class="fas fa-calendar-day"></i> Dia todo</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="avail-section-label">Horario de funcionamento</div>
+                                    <div class="avail-times">
+                                        <div class="avail-time-group">
+                                            <label>Abre</label>
+                                            <input type="time" class="avail-time-input" value="${config.startTime || '08:00'}" id="avail-start-${i}" ${dis}>
+                                        </div>
+                                        <div class="avail-time-group">
+                                            <label>Fecha</label>
+                                            <input type="time" class="avail-time-input" value="${config.endTime || '18:00'}" id="avail-end-${i}" ${dis}>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="avail-section-label">Intervalo / Almoco</div>
+                                    <div class="avail-times">
+                                        <div class="avail-time-group">
+                                            <label>Inicio</label>
+                                            <input type="time" class="avail-time-input" value="${config.lunchStart || '12:00'}" id="avail-lunch-s-${i}" ${dis}>
+                                        </div>
+                                        <div class="avail-time-group">
+                                            <label>Fim</label>
+                                            <input type="time" class="avail-time-input" value="${config.lunchEnd || '13:00'}" id="avail-lunch-e-${i}" ${dis}>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>`;
             }).join('');
@@ -1104,23 +1193,23 @@
 
         function toggleAvailDay(day, enabled) {
             const row = document.getElementById(`avail-day-${day}`);
+            const body = document.getElementById(`avail-body-${day}`);
             const inputs = row.querySelectorAll('.avail-time-input');
-            const periodSelector = document.getElementById(`period-selector-${day}`);
-            const timesRow = document.getElementById(`avail-times-${day}`);
+            const icon = row.querySelector('.avail-day-icon');
+            const badge = row.querySelector('.avail-day-header .status-badge');
+
             if (enabled) {
                 row.classList.remove('disabled-day');
                 inputs.forEach(i => i.disabled = false);
-                periodSelector.style.opacity = '1';
-                periodSelector.style.pointerEvents = 'auto';
-                timesRow.style.opacity = '1';
-                timesRow.style.pointerEvents = 'auto';
+                if (body) { body.style.opacity = '1'; body.style.pointerEvents = 'auto'; }
+                if (icon) { icon.style.background = 'rgba(233,30,99,0.1)'; icon.style.color = 'var(--accent)'; }
+                if (badge) { badge.className = 'status-badge status-confirmado'; badge.style.fontSize = '0.65rem'; badge.textContent = 'Ativo'; }
             } else {
                 row.classList.add('disabled-day');
                 inputs.forEach(i => i.disabled = true);
-                periodSelector.style.opacity = '0.4';
-                periodSelector.style.pointerEvents = 'none';
-                timesRow.style.opacity = '0.4';
-                timesRow.style.pointerEvents = 'none';
+                if (body) { body.style.opacity = '0.4'; body.style.pointerEvents = 'none'; }
+                if (icon) { icon.style.background = 'var(--border-light)'; icon.style.color = 'var(--text-muted)'; }
+                if (badge) { badge.className = 'status-badge'; badge.style.cssText = 'font-size:0.65rem;background:var(--border-light);color:var(--text-muted);'; badge.textContent = 'Inativo'; }
             }
         }
 
@@ -1357,12 +1446,11 @@
                 bookings = bookings.filter(b => b.date === dateFilter);
             }
             bookings = bookings
-                .filter(b => b.status !== 'cancelado')
                 .sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
 
             const container = document.getElementById('agenda-list');
             if (bookings.length === 0) {
-                container.innerHTML = '<div class="empty-state"><i class="far fa-calendar"></i><p>Nenhum agendamento nesta data</p></div>';
+                container.innerHTML = '<div class="empty-state"><i class="far fa-calendar"></i><p>Nenhum agendamento encontrado</p></div>';
                 return;
             }
             container.classList.add('content-ready', 'stagger-in');
@@ -1370,7 +1458,7 @@
                 const totalTime = (b.duration || 0) + (b.prepTime || 0);
                 const endTime = minToTime(timeToMin(b.time) + totalTime);
                 const statusClass = 'status-' + b.status;
-                const statusLabel = b.status === 'pendente' ? 'Pendente' : b.status === 'confirmado' ? 'Confirmado' : b.status;
+                const statusLabel = b.status === 'pendente' ? 'Pendente' : b.status === 'confirmado' ? 'Confirmado' : b.status === 'cancelado' ? 'Cancelado' : b.status;
                 return `
                     <div class="agenda-item">
                         <div style="min-width:65px;">
@@ -1386,14 +1474,24 @@
                         </div>
                         <div style="text-align:right;">
                             <span class="status-badge ${statusClass} mb-8">${statusLabel}</span><br>
-                            <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="requestDelete('booking','${b.id}','${(b.clientName || '').replace(/'/g, "\\'")}')" title="Excluir"><i class="fas fa-times"></i></button>
+                            ${b.status !== 'cancelado' ? `<button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="requestDelete('booking','${b.id}','${(b.clientName || '').replace(/'/g, "\\'")}','${(b.clientPhone || '').replace(/'/g, "\\'")}','${(b.serviceName || '').replace(/'/g, "\\'")}','${b.date || ''}','${b.time || ''}','${b.status || ''}')" title="Cancelar"><i class="fas fa-times"></i></button>` : ''}
                         </div>
                     </div>`;
             }).join('');
         }
 
         // ===== DELETE CONFIRMATION =====
-        function requestDelete(type, id, name) {
+        let cancelBookingTarget = null;
+
+        function requestDelete(type, id, name, phone, serviceName, date, time, status) {
+            // For bookings with status pendente/confirmado, use the cancel modal with reason
+            if (type === 'booking' && (status === 'confirmado' || status === 'pendente')) {
+                cancelBookingTarget = { id, name, phone, serviceName, date, time };
+                document.getElementById('cancel-booking-reason').value = '';
+                openModal('cancel-booking-overlay', 'cancel-booking-sheet');
+                return;
+            }
+            // For services, products, promotions: simple delete
             deleteTarget = { type, id };
             document.getElementById('delete-message').textContent = `Deseja excluir "${name}"? Esta acao nao pode ser desfeita.`;
             openModal('delete-overlay', 'delete-sheet');
@@ -1406,12 +1504,39 @@
             try {
                 if (deleteTarget.type === 'service') await deleteService(deleteTarget.id);
                 else if (deleteTarget.type === 'product') await deleteProduct(deleteTarget.id);
-                else if (deleteTarget.type === 'booking') await deleteBooking(deleteTarget.id);
                 else if (deleteTarget.type === 'promotion') await deletePromotion(deleteTarget.id);
                 closeDeleteModal();
                 showToast('Excluido com sucesso', 'success');
                 await refreshAll();
             } catch(e) { showToast('Erro: ' + e.message, 'error'); }
+        }
+
+        function closeCancelBookingModal() { closeModal('cancel-booking-overlay', 'cancel-booking-sheet'); cancelBookingTarget = null; }
+
+        async function confirmCancelBooking() {
+            if (!cancelBookingTarget) return;
+            const reason = document.getElementById('cancel-booking-reason').value.trim();
+            if (!reason) { showToast('Informe o motivo do cancelamento', 'error'); return; }
+
+            try {
+                await updateBookingStatus(cancelBookingTarget.id, 'cancelado', reason);
+
+                if (cancelBookingTarget.phone) {
+                    const dateLabel = cancelBookingTarget.date ? formatDateBR(cancelBookingTarget.date) : '';
+                    const msg = `Ola ${cancelBookingTarget.name}! Infelizmente seu agendamento na Poar Estetica foi CANCELADO.\n\nServico: ${cancelBookingTarget.serviceName}${dateLabel ? `\nData: ${dateLabel}` : ''}${cancelBookingTarget.time ? `\nHorario: ${cancelBookingTarget.time}` : ''}\n\nMotivo: ${reason}\n\nPor favor, entre em contato para reagendar.`;
+                    sendWhatsApp(cancelBookingTarget.phone, msg).catch(err => console.error('WAHA error:', err));
+                }
+
+                const idx = cachedBookings.findIndex(b => b.id === cancelBookingTarget.id);
+                if (idx >= 0) cachedBookings[idx].status = 'cancelado';
+
+                closeCancelBookingModal();
+                showToast('Agendamento cancelado. Cliente notificado via WhatsApp.', 'success');
+                renderAgenda();
+                renderDashboard();
+            } catch(e) {
+                showToast('Erro: ' + e.message, 'error');
+            }
         }
 
         // ===== LOGOUT =====

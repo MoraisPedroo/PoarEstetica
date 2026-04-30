@@ -118,6 +118,7 @@
 
             await initAuth();
             updateNavState();
+            applyLogoConfig();
 
             try {
                 [allServices, allProducts, allPromotions] = await Promise.all([
@@ -293,7 +294,10 @@
 
                 if (isOutOfStock) {
                     actionHtml =
-                        '<button class="btn btn-primary btn-full mt-16 btn-lg" disabled><i class="fas fa-ban"></i> Produto esgotado</button>';
+                        '<p class="text-sm text-muted mt-12" style="text-align:center;"><i class="fas fa-exclamation-circle"></i> Este produto esta esgotado no momento.</p>' +
+                        '<button class="btn btn-primary btn-full mt-16 btn-lg" id="notify-btn" onclick="handleNotifyStock(\'' + id + '\', \'' + item.name.replace(/'/g, "\\'") + '\')">' +
+                            '<i class="fab fa-whatsapp"></i> Quero ser notificado quando estiver disponivel' +
+                        '</button>';
                 } else {
                     actionHtml =
                         '<div class="flex justify-between items-center mt-16">' +
@@ -375,6 +379,26 @@
                 btnLoading(btn, false);
                 console.error(e);
                 showToast('Erro ao realizar pedido. Tente novamente.', 'error');
+            }
+        }
+
+        async function handleNotifyStock(productId, productName) {
+            if (!isLoggedIn()) {
+                closeDetail();
+                setTimeout(function() { openModal('login-overlay', 'login-sheet'); }, 300);
+                return;
+            }
+            const btn = document.getElementById('notify-btn');
+            btnLoading(btn, true);
+            try {
+                const profile = getProfile();
+                await addStockNotification(productId, productName, profile.name, profile.email, profile.phone);
+                btnLoading(btn, false);
+                showToast('Voce sera notificado via WhatsApp quando este produto estiver disponivel!', 'success');
+            } catch(e) {
+                btnLoading(btn, false);
+                console.error(e);
+                showToast('Erro ao registrar notificacao. Tente novamente.', 'error');
             }
         }
 
