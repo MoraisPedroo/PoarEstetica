@@ -82,6 +82,9 @@
 
                     <h3 class="section-title mb-16" style="margin-top:28px;"><i class="fas fa-shopping-bag" style="color:var(--accent);"></i> Pedidos de Produtos Pendentes</h3>
                     <div id="pending-orders-list"></div>
+
+                    <h3 class="section-title mb-16" style="margin-top:28px;"><i class="fas fa-gift" style="color:#f59e0b;"></i> Resgates de Promoção Pendentes</h3>
+                    <div id="pending-redemptions-list"></div>
                 </div>
             </div>
 
@@ -506,6 +509,7 @@
         let cachedProducts = [];
         let cachedBookings = [];
         let cachedOrders = [];
+        let cachedRedemptions = [];
         let newProductStockType = 'quantidade';
         let editProductStockType = 'quantidade';
 
@@ -529,7 +533,7 @@
             document.getElementById('tab-' + name).classList.add('active');
             if (name === 'agenda') renderAgenda();
             if (name === 'disponibilidade') renderAvailability();
-            if (name === 'aprovacoes') { renderPendingBookings(); renderPendingOrders(); }
+            if (name === 'aprovacoes') { renderPendingBookings(); renderPendingOrders(); renderPendingRedemptions(); }
             if (name === 'promocoes') { renderPromotionFormSelects(); renderPromotionsList(); }
         }
 
@@ -538,6 +542,11 @@
                 [cachedServices, cachedProducts, cachedBookings, cachedOrders] = await Promise.all([
                     getServices(), getProducts(), getBookings(), getProductOrders()
                 ]);
+                // Fetch redemptions separately (collection may not exist yet)
+                try {
+                    const snap = await db.collection('promotionRedemptions').get();
+                    cachedRedemptions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                } catch(e) { cachedRedemptions = []; }
             } catch(e) { console.error(e); }
 
             renderDashboard();
@@ -547,6 +556,7 @@
             renderBlockedDates();
             renderPendingBookings();
             renderPendingOrders();
+            renderPendingRedemptions();
             renderPromotionFormSelects();
             renderPromotionsList();
         }
@@ -562,7 +572,7 @@
             if (tab === 'agenda') renderAgenda();
             if (tab === 'servicos') renderServicesList();
             if (tab === 'produtos') renderProductsList();
-            if (tab === 'aprovacoes') { renderPendingBookings(); renderPendingOrders(); }
+            if (tab === 'aprovacoes') { renderPendingBookings(); renderPendingOrders(); renderPendingRedemptions(); }
             if (tab === 'disponibilidade') { renderAvailability(); renderBlockedDates(); }
             if (tab === 'promocoes') { renderPromotionFormSelects(); renderPromotionsList(); }
         }
@@ -584,6 +594,14 @@
                 cachedProducts = data;
                 rerenderActiveTab();
             });
+            // Real-time listener for promotion redemptions
+            try {
+                db.collection('promotionRedemptions').onSnapshot(snap => {
+                    cachedRedemptions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    renderDashboard();
+                    if (getActiveTab() === 'aprovacoes') renderPendingRedemptions();
+                }, err => console.error('redemptions listener error:', err));
+            } catch(e) { console.error(e); }
         }
 
         // ===== DASHBOARD =====
@@ -599,8 +617,9 @@
             document.getElementById('stat-products').textContent = cachedProducts.length;
             document.getElementById('stat-orders-pending').textContent = pendingOrders.length;
 
-            // Pending count badge (bookings + orders)
-            const totalPending = pending.length + pendingOrders.length;
+            // Pending count badge (bookings + orders + redemptions)
+            const pendingRedemptions = (cachedRedemptions || []).filter(r => r.status === 'pendente');
+            const totalPending = pending.length + pendingOrders.length + pendingRedemptions.length;
             const badge = document.getElementById('pending-count-badge');
             if (totalPending > 0) {
                 badge.classList.remove('hidden');
@@ -725,6 +744,78 @@
                     </div>
                 </div>`;
             }).join('');
+        }
+
+        // ===== PENDING PROMOTION REDEMPTIONS =====
+        function renderPendingRedemptions() {
+            const container = document.getElementById('pending-redemptions-list');
+            if (!container) return;
+            const pending = (cachedRedemptions || []).filter(r => r.status === 'pendente');
+            if (pending.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-gift"></i><p>Nenhum resgate pendente</p></div>';
+                return;
+            }
+            container.innerHTML = pending.map(r => {
+                const safePhone = (r.clientPhone || '').replace(/'/g, "\\'");
+                const safeName = (r.clientName || r.clientEmail || '').replace(/'/g, "\\'");
+                const safeReward = (r.rewardTargetName || '').replace(/'/g, "\\'");
+                return `
+                <div class="order-card" style="border-left:3px solid #f59e0b;">
+                    <div style="display:flex;gap:12px;align-items:flex-start;">
+                        <div style="flex:1;">
+                            <div class="fw-600 text-sm"><i class="fas fa-gift" style="color:#f59e0b;"></i> Resgate: ${r.freeCount || 1}x ${r.rewardTargetName || 'brinde'}</div>
+                            <div class="text-xs text-muted">Cliente: ${r.clientName || r.clientEmail}</div>
+                            <div class="text-xs text-muted">Promoção: ${r.promotionDesc || r.requiredTargetName || ''}</div>
+                            <div class="text-xs text-muted"><i class="fab fa-whatsapp" style="color:#25d366;"></i> ${r.clientPhone || 'Nao informado'}</div>
+                        </div>
+                        <span class="status-badge status-pendente">Aguardando</span>
+                    </div>
+                    <div class="approval-actions" style="margin-top:10px;">
+                        <button class="btn-approve approve" onclick="scheduleRedemption('${r.id}', '${safePhone}', '${safeName}', '${safeReward}')">
+                            <i class="fab fa-whatsapp"></i> Entrar em contato p/ agendar
+                        </button>
+                        <button class="btn-approve reject" onclick="rejectRedemption('${r.id}')">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function scheduleRedemption(id, phone, clientName, rewardName) {
+            try {
+                await db.collection('promotionRedemptions').doc(id).update({
+                    status: 'agendado',
+                    scheduledAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                // Send WhatsApp message to client
+                if (phone) {
+                    const msg = `Olá ${clientName || 'cliente'}! 🎁\n\nEstou entrando em contato sobre o resgate da sua promoção: ${rewardName}.\n\nVamos combinar o melhor dia e horário para você receber seu brinde!\n\nPoar Estética 💕`;
+                    if (typeof sendWhatsApp === 'function') {
+                        sendWhatsApp(phone, msg).catch(err => console.error('WAHA error:', err));
+                    }
+                }
+                showToast('Resgate marcado como agendado! Mensagem enviada.', 'success');
+                renderPendingRedemptions();
+                renderDashboard();
+            } catch(e) {
+                showToast('Erro: ' + e.message, 'error');
+            }
+        }
+
+        async function rejectRedemption(id) {
+            if (!confirm('Cancelar este resgate?')) return;
+            try {
+                await db.collection('promotionRedemptions').doc(id).update({
+                    status: 'cancelado',
+                    cancelReason: 'Cancelado pela administração'
+                });
+                showToast('Resgate cancelado.', 'success');
+                renderPendingRedemptions();
+                renderDashboard();
+            } catch(e) {
+                showToast('Erro: ' + e.message, 'error');
+            }
         }
 
         async function approveOrder(id) {

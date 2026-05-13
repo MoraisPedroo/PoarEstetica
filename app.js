@@ -335,7 +335,8 @@ function openItemDetail(type, id) {
         ? 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop'
         : 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=300&fit=crop');
 
-    const isOutOfStock = type === 'produto' && item.stockType === 'quantidade' && (item.stockQuantity || 0) <= 0;
+    // Product is "On Order" (sob encomenda) if requisicao OR quantidade with 0 stock
+    const onOrder = type === 'produto' && !(item.stockType === 'quantidade' && (item.stockQuantity || 0) > 0);
 
     let metaHtml = '';
     if (type === 'servico') {
@@ -349,26 +350,29 @@ function openItemDetail(type, id) {
                 </span>` : ''}
             </div>`;
     } else {
-        const stockLabel = isOutOfStock ? 'Esgotado'
-            : item.stockType === 'requisicao' ? 'Sob encomenda'
-            : `${item.stockQuantity} em estoque`;
-        const stockColor = isOutOfStock ? 'var(--danger)' : item.stockType === 'requisicao' ? 'var(--accent)' : '#4caf50';
+        const stockLabel = onOrder ? 'Sob encomenda' : 'Em estoque';
+        const stockColor = onOrder ? '#f59e0b' : '#4caf50';
+        const stockIcon = onOrder ? 'truck' : 'check-circle';
         metaHtml = `
             <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
-                <span style="display:flex;align-items:center;gap:6px;font-size:0.8rem;color:${stockColor};">
-                    <i class="fas fa-${isOutOfStock ? 'times-circle' : item.stockType === 'requisicao' ? 'truck' : 'check-circle'}"></i> ${stockLabel}
+                <span style="display:flex;align-items:center;gap:6px;font-size:0.8rem;color:${stockColor};font-weight:600;">
+                    <i class="fas fa-${stockIcon}"></i> ${stockLabel}
                 </span>
-                ${item.deliveryTime ? `<span style="font-size:0.8rem;color:var(--text-muted);"><i class="fas fa-calendar-check"></i> ${item.deliveryTime}</span>` : ''}
+                ${item.deliveryTime && onOrder ? `<span style="font-size:0.8rem;color:var(--text-muted);"><i class="fas fa-calendar-check"></i> ${item.deliveryTime}</span>` : ''}
             </div>`;
     }
 
     let actionBtn = '';
+    let extraNote = '';
     if (type === 'servico') {
-        actionBtn = `<a href="agendar.html" class="btn btn-primary btn-full btn-lg mt-4" style="border-radius:14px;"><i class="fas fa-calendar-plus"></i> Agendar agora</a>`;
-    } else if (isOutOfStock) {
-        actionBtn = `<a href="catalogo.html#produtos" class="btn btn-primary btn-full btn-lg mt-4" style="border-radius:14px;"><i class="fas fa-bell"></i> Me avise quando disponivel</a>`;
+        actionBtn = `<a href="agendar.html" class="btn btn-primary btn-full btn-lg mt-4" style="border-radius:14px;"><i class="fas fa-arrow-right"></i> Ver disponibilidade e agendar</a>`;
+        extraNote = `<p class="text-xs text-muted mt-8" style="text-align:center;"><i class="fas fa-info-circle"></i> Você será levado para a página de agendamento</p>`;
+    } else if (onOrder) {
+        actionBtn = `<a href="catalogo.html#produtos" class="btn btn-primary btn-full btn-lg mt-4" style="border-radius:14px;background:linear-gradient(135deg,#f59e0b,#f97316);border:none;"><i class="fas fa-arrow-right"></i> Solicitar sob encomenda</a>`;
+        extraNote = `<p class="text-xs text-muted mt-8" style="text-align:center;"><i class="fas fa-info-circle"></i> Produto fora de estoque — a Poar entra em contato quando chegar</p>`;
     } else {
-        actionBtn = `<a href="catalogo.html#produtos" class="btn btn-primary btn-full btn-lg mt-4" style="border-radius:14px;"><i class="fas fa-shopping-bag"></i> Solicitar produto</a>`;
+        actionBtn = `<a href="catalogo.html#produtos" class="btn btn-primary btn-full btn-lg mt-4" style="border-radius:14px;"><i class="fas fa-arrow-right"></i> Ver no catálogo e solicitar</a>`;
+        extraNote = `<p class="text-xs text-muted mt-8" style="text-align:center;"><i class="fas fa-info-circle"></i> Você será levado para o catálogo para concluir o pedido</p>`;
     }
 
     content.innerHTML = `
@@ -386,6 +390,7 @@ function openItemDetail(type, id) {
             ${metaHtml}
             ${item.description ? `<p style="font-size:0.875rem;color:var(--text-muted);line-height:1.6;margin-bottom:16px;">${item.description}</p>` : ''}
             ${actionBtn}
+            ${extraNote}
         </div>`;
 
     openModal('detail-overlay', 'detail-sheet');
@@ -469,19 +474,220 @@ async function applyLogoConfig() {
     try {
         const config = await getSiteConfig();
         const logoEl = document.querySelector('.header-logo');
-        if (!logoEl) return;
-        if (config.logoImage) {
-            logoEl.innerHTML = `<img src="${config.logoImage}" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`;
-        } else if (config.logoText) {
-            let style = '';
-            if (config.logoFontSize === 'pequeno') style += 'font-size:0.7rem;';
-            else if (config.logoFontSize === 'grande') style += 'font-size:1.3rem;';
-            else style += 'font-size:1rem;';
-            if (config.logoFontStyle === 'negrito') style += 'font-weight:800;';
-            else if (config.logoFontStyle === 'italico') style += 'font-style:italic;';
-            logoEl.innerHTML = `<span style="${style}">${config.logoText}</span>`;
+        const titleEl = document.querySelector('.header-title');
+        const subtitleEl = document.querySelector('.header-subtitle');
+
+        // Apply logo (icon/image)
+        if (logoEl) {
+            const existingBadge = logoEl.querySelector('.header-logo-edit-badge');
+            if (config.logoImage) {
+                logoEl.innerHTML = `<img src="${config.logoImage}" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`;
+            } else {
+                let style = '';
+                if (config.logoFontSize === 'small' || config.logoFontSize === 'pequeno') style += 'font-size:0.85rem;';
+                else if (config.logoFontSize === 'large' || config.logoFontSize === 'grande') style += 'font-size:1.5rem;';
+                else style += 'font-size:1.1rem;';
+                if (config.logoFontStyle === 'bold' || config.logoFontStyle === 'negrito') style += 'font-weight:800;';
+                else if (config.logoFontStyle === 'italic' || config.logoFontStyle === 'italico') style += 'font-style:italic;';
+                const text = config.logoText || 'P';
+                logoEl.innerHTML = `<span style="${style}">${text}</span>`;
+            }
+            if (existingBadge) logoEl.appendChild(existingBadge);
+        }
+
+        // Apply title + subtitle text (the "Poar Estética" branding)
+        if (titleEl && config.brandTitle) titleEl.textContent = config.brandTitle;
+        if (subtitleEl && config.brandSubtitle) subtitleEl.textContent = config.brandSubtitle;
+
+        // If admin, ensure the edit badge is present on the logo
+        if (typeof isAdmin === 'function' && isAdmin() && logoEl) {
+            addAdminLogoEditBadge(logoEl);
         }
     } catch(e) { console.error('Logo config error:', e); }
+}
+
+// ========== ADMIN LOGO EDIT (global) ==========
+function addAdminLogoEditBadge(el) {
+    if (!el || el.querySelector('.header-logo-edit-badge')) return;
+    el.style.position = 'relative';
+    const badge = document.createElement('span');
+    badge.className = 'header-logo-edit-badge';
+    badge.title = 'Editar logo e branding';
+    badge.innerHTML = '<i class="fas fa-pen"></i>';
+    badge.style.cssText = 'position:absolute;bottom:-4px;right:-4px;background:var(--accent,#e91e63);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;cursor:pointer;border:2px solid var(--bg,#fff);z-index:2;transition:transform 0.15s;';
+    badge.onmouseover = () => badge.style.transform = 'scale(1.15)';
+    badge.onmouseout = () => badge.style.transform = 'scale(1)';
+    badge.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openGlobalLogoEditModal();
+    };
+    el.appendChild(badge);
+}
+
+function ensureLogoEditModalInjected() {
+    if (document.getElementById('global-logoedit-overlay')) return;
+    const modalHtml = `
+        <div class="modal-overlay" id="global-logoedit-overlay" onclick="closeGlobalLogoEditModal()"></div>
+        <div class="bottom-sheet" id="global-logoedit-sheet">
+            <div class="bottom-sheet-handle"></div>
+            <div class="flex items-center justify-between mb-16">
+                <h3 class="bottom-sheet-title" style="margin-bottom:0;"><i class="fas fa-paint-brush" style="color:var(--accent);"></i> Editar Logo e Branding</h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeGlobalLogoEditModal()" style="color:var(--text-muted);"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="text-align:center;margin-bottom:16px;">
+                <div id="global-logo-edit-preview" style="width:80px;height:80px;border-radius:16px;background:var(--bg-card,#fff);border:2px solid var(--border-light,#eee);display:inline-flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:1.6rem;font-weight:700;color:var(--accent,#e91e63);overflow:hidden;">P</div>
+                <div><strong id="global-brand-preview-title" style="font-size:1.05rem;color:var(--text-dark);">Poar</strong> <span id="global-brand-preview-subtitle" style="font-size:0.85rem;color:var(--text-muted);">Estetica</span></div>
+            </div>
+            <div style="text-align:left;display:flex;flex-direction:column;gap:14px;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label"><i class="fas fa-image"></i> Imagem do ícone (opcional)</label>
+                    <button class="btn btn-outline btn-sm btn-full" id="btn-upload-global-logo" onclick="uploadGlobalLogoImage()">
+                        <i class="fas fa-upload"></i> Enviar imagem
+                    </button>
+                    <input type="hidden" id="global-logo-edit-image-url">
+                    <button class="btn btn-ghost btn-sm mt-8 hidden" id="btn-remove-global-logo-img" onclick="removeGlobalLogoImage()" style="color:var(--danger,red);font-size:0.8rem;">
+                        <i class="fas fa-trash"></i> Remover imagem
+                    </button>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label"><i class="fas fa-font"></i> Letra/texto do ícone</label>
+                    <input type="text" class="form-control" id="global-logo-edit-text" placeholder="Ex: P" maxlength="10">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Tamanho</label>
+                        <select class="form-control" id="global-logo-edit-fontsize">
+                            <option value="small">Pequeno</option>
+                            <option value="medium" selected>Médio</option>
+                            <option value="large">Grande</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Estilo</label>
+                        <select class="form-control" id="global-logo-edit-fontstyle">
+                            <option value="normal">Normal</option>
+                            <option value="bold">Negrito</option>
+                            <option value="italic">Itálico</option>
+                        </select>
+                    </div>
+                </div>
+                <hr style="border:none;border-top:1px solid var(--border-light);margin:4px 0;">
+                <p class="text-xs fw-600 text-muted" style="text-transform:uppercase;letter-spacing:0.04em;"><i class="fas fa-tag" style="color:var(--accent);"></i> Texto da marca</p>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">Nome principal</label>
+                    <input type="text" class="form-control" id="global-brand-title" placeholder="Poar" maxlength="30">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">Complemento</label>
+                    <input type="text" class="form-control" id="global-brand-subtitle" placeholder="Estetica" maxlength="40">
+                </div>
+                <button class="btn btn-primary btn-full btn-lg mt-8" id="btn-save-global-logo" onclick="saveGlobalLogoConfig()">
+                    <i class="fas fa-save"></i> Salvar
+                </button>
+            </div>
+        </div>`;
+    const wrap = document.createElement('div');
+    wrap.innerHTML = modalHtml;
+    document.body.appendChild(wrap);
+
+    // Live preview listeners
+    document.getElementById('global-logo-edit-text').addEventListener('input', updateGlobalLogoPreview);
+    document.getElementById('global-logo-edit-fontsize').addEventListener('change', updateGlobalLogoPreview);
+    document.getElementById('global-logo-edit-fontstyle').addEventListener('change', updateGlobalLogoPreview);
+    document.getElementById('global-brand-title').addEventListener('input', e => {
+        document.getElementById('global-brand-preview-title').textContent = e.target.value || 'Poar';
+    });
+    document.getElementById('global-brand-subtitle').addEventListener('input', e => {
+        document.getElementById('global-brand-preview-subtitle').textContent = e.target.value || 'Estetica';
+    });
+}
+
+function updateGlobalLogoPreview() {
+    const preview = document.getElementById('global-logo-edit-preview');
+    if (!preview) return;
+    const imgUrl = document.getElementById('global-logo-edit-image-url').value;
+    if (imgUrl) {
+        preview.innerHTML = `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`;
+        document.getElementById('btn-remove-global-logo-img').classList.remove('hidden');
+        return;
+    }
+    const text = document.getElementById('global-logo-edit-text').value || 'P';
+    const size = document.getElementById('global-logo-edit-fontsize').value;
+    const style = document.getElementById('global-logo-edit-fontstyle').value;
+    let css = '';
+    if (size === 'small') css += 'font-size:1.1rem;';
+    else if (size === 'large') css += 'font-size:2.1rem;';
+    else css += 'font-size:1.6rem;';
+    if (style === 'bold') css += 'font-weight:800;';
+    else if (style === 'italic') css += 'font-style:italic;';
+    preview.innerHTML = `<span style="${css}">${text}</span>`;
+}
+
+async function openGlobalLogoEditModal() {
+    ensureLogoEditModalInjected();
+    try {
+        const config = await getSiteConfig();
+        document.getElementById('global-logo-edit-image-url').value = config.logoImage || '';
+        document.getElementById('global-logo-edit-text').value = config.logoText || 'P';
+        document.getElementById('global-logo-edit-fontsize').value = config.logoFontSize || 'medium';
+        document.getElementById('global-logo-edit-fontstyle').value = config.logoFontStyle || 'normal';
+        document.getElementById('global-brand-title').value = config.brandTitle || 'Poar';
+        document.getElementById('global-brand-subtitle').value = config.brandSubtitle || 'Estetica';
+        const removeBtn = document.getElementById('btn-remove-global-logo-img');
+        if (config.logoImage) removeBtn.classList.remove('hidden');
+        else removeBtn.classList.add('hidden');
+        updateGlobalLogoPreview();
+        document.getElementById('global-brand-preview-title').textContent = config.brandTitle || 'Poar';
+        document.getElementById('global-brand-preview-subtitle').textContent = config.brandSubtitle || 'Estetica';
+    } catch(e) { console.error(e); }
+    openModal('global-logoedit-overlay', 'global-logoedit-sheet');
+}
+
+function closeGlobalLogoEditModal() {
+    closeModal('global-logoedit-overlay', 'global-logoedit-sheet');
+}
+
+async function uploadGlobalLogoImage() {
+    try {
+        showToast('Selecione uma imagem...', '');
+        const url = await pickAndUploadImage(`siteConfig/logo_${Date.now()}`);
+        document.getElementById('global-logo-edit-image-url').value = url;
+        document.getElementById('btn-remove-global-logo-img').classList.remove('hidden');
+        updateGlobalLogoPreview();
+        showToast('Imagem carregada!', 'success');
+    } catch(e) {
+        if (e.message !== 'Nenhum arquivo selecionado') showToast('Erro ao enviar imagem', 'error');
+    }
+}
+
+function removeGlobalLogoImage() {
+    document.getElementById('global-logo-edit-image-url').value = '';
+    document.getElementById('btn-remove-global-logo-img').classList.add('hidden');
+    updateGlobalLogoPreview();
+}
+
+async function saveGlobalLogoConfig() {
+    const btn = document.getElementById('btn-save-global-logo');
+    btnLoading(btn, true);
+    try {
+        const data = {
+            logoImage: document.getElementById('global-logo-edit-image-url').value || '',
+            logoText: document.getElementById('global-logo-edit-text').value.trim() || 'P',
+            logoFontSize: document.getElementById('global-logo-edit-fontsize').value,
+            logoFontStyle: document.getElementById('global-logo-edit-fontstyle').value,
+            brandTitle: document.getElementById('global-brand-title').value.trim() || 'Poar',
+            brandSubtitle: document.getElementById('global-brand-subtitle').value.trim() || 'Estetica'
+        };
+        await updateSiteConfig(data);
+        await applyLogoConfig();
+        closeGlobalLogoEditModal();
+        showToast('Logo e branding atualizados!', 'success');
+    } catch(e) {
+        showToast('Erro ao salvar: ' + e.message, 'error');
+    } finally {
+        btnLoading(btn, false);
+    }
 }
 
 // ========== PROMOTION RENDER FOR CLIENT ==========
@@ -491,22 +697,51 @@ async function renderClientPromotions(containerEl, clientEmail) {
         const promotions = await getPromotions();
         if (promotions.length === 0) { containerEl.innerHTML = ''; return; }
 
+        // Fetch existing redemption requests for this client to know which are pending/done
+        const redemptionsSnap = await db.collection('promotionRedemptions')
+            .where('clientEmail', '==', clientEmail)
+            .get();
+        const redemptions = redemptionsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
         let html = '';
         for (const promo of promotions) {
-            const count = await getClientPromotionProgress(clientEmail, promo.targetId, promo.type);
+            // Use new field names (requiredTargetId/Name/Type) with fallback to legacy names
+            const reqTargetId = promo.requiredTargetId || promo.targetId;
+            const reqType = promo.requiredType || promo.type;
+            const reqName = promo.requiredTargetName || promo.targetName || 'Item';
+            const rewName = promo.rewardTargetName || reqName;
             const required = promo.requiredCount || 5;
-            const remaining = Math.max(0, required - (count % (required + (promo.freeCount || 1))));
-            const progress = Math.min(count % (required + (promo.freeCount || 1)), required);
+            const freeCount = promo.freeCount || 1;
+
+            if (!reqTargetId) continue; // skip invalid promos
+
+            const count = await getClientPromotionProgress(clientEmail, reqTargetId, reqType);
+
+            // Has this client already requested a redemption that is still pending/scheduled?
+            const pendingRedemption = redemptions.find(r =>
+                r.promotionId === promo.id && (r.status === 'pendente' || r.status === 'agendado')
+            );
+
+            const cyclesEarned = Math.floor(count / required);
+            // Only pending/agendado/concluido redemptions count against earned cycles
+            const redemptionsClaimed = redemptions.filter(r =>
+                r.promotionId === promo.id && r.status !== 'cancelado'
+            ).length;
+            const earnedNotClaimed = Math.max(0, cyclesEarned - redemptionsClaimed);
+            const progress = Math.min(count - (redemptionsClaimed * required), required);
             const pct = Math.round((progress / required) * 100);
-            const earned = Math.floor(count / (required + (promo.freeCount || 1)));
+            const remaining = Math.max(0, required - progress);
+            const canRedeem = earnedNotClaimed > 0 && !pendingRedemption;
+
+            const desc = promo.description || `Agende ${required}x ${reqName} e ganhe ${freeCount}x ${rewName} gratis!`;
 
             html += `
                 <div class="promo-card fade-in">
                     <div class="promo-header">
                         <div class="promo-icon"><i class="fas fa-gift"></i></div>
                         <div class="promo-info">
-                            <h4 class="promo-title">${promo.targetName}</h4>
-                            <p class="promo-desc">${promo.description || `Agende ${required}x e ganhe ${promo.freeCount || 1} gratis!`}</p>
+                            <h4 class="promo-title">${reqName}</h4>
+                            <p class="promo-desc">${desc}</p>
                         </div>
                     </div>
                     <div class="promo-progress">
@@ -515,16 +750,82 @@ async function renderClientPromotions(containerEl, clientEmail) {
                         </div>
                         <div class="promo-stats">
                             <span>${progress} de ${required}</span>
-                            <span>${remaining > 0 ? `Falta${remaining > 1 ? 'm' : ''} ${remaining}` : 'Resgate disponivel!'}</span>
+                            <span>${canRedeem ? '🎉 Resgate disponivel!' : remaining > 0 ? `Falta${remaining > 1 ? 'm' : ''} ${remaining}` : 'Completo!'}</span>
                         </div>
                     </div>
-                    ${earned > 0 ? `<div class="promo-earned"><i class="fas fa-trophy"></i> ${earned} gratis resgatado${earned > 1 ? 's' : ''}!</div>` : ''}
+                    ${pendingRedemption ? `
+                        <div class="promo-earned" style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;">
+                            <i class="fas fa-hourglass-half"></i> Aguardando Poar agendar seu brinde!
+                        </div>` : ''}
+                    ${canRedeem ? `
+                        <button class="btn btn-primary btn-full mt-12" onclick="redeemPromotion('${promo.id}')" style="background:linear-gradient(135deg,#f59e0b,#f97316);border:none;">
+                            <i class="fas fa-trophy"></i> Resgatar ${freeCount}x ${rewName}!
+                        </button>` : ''}
                 </div>`;
         }
         containerEl.innerHTML = html;
     } catch (err) {
         console.error('Error rendering promotions:', err);
+        containerEl.innerHTML = '<p class="text-sm text-muted text-center">Erro ao carregar promoc&otilde;es.</p>';
     }
+}
+
+// ========== PROMOTION REDEMPTION ==========
+async function redeemPromotion(promotionId) {
+    const user = getProfile();
+    if (!user) { showToast('Faça login primeiro', 'error'); return; }
+    if (!user.phone) { showToast('Adicione seu WhatsApp no perfil para resgatar', 'error'); return; }
+
+    try {
+        // Fetch the promotion
+        const promoDoc = await db.collection('promotions').doc(promotionId).get();
+        if (!promoDoc.exists) { showToast('Promoção não encontrada', 'error'); return; }
+        const promo = { id: promoDoc.id, ...promoDoc.data() };
+
+        // Create redemption request
+        await db.collection('promotionRedemptions').add({
+            promotionId: promo.id,
+            promotionDesc: promo.description || '',
+            requiredTargetName: promo.requiredTargetName || promo.targetName || '',
+            rewardTargetId: promo.rewardTargetId || '',
+            rewardTargetName: promo.rewardTargetName || '',
+            rewardType: promo.rewardType || 'servico',
+            freeCount: promo.freeCount || 1,
+            clientEmail: user.email,
+            clientName: user.name || '',
+            clientPhone: user.phone,
+            clientUid: user.uid || '',
+            status: 'pendente',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Show success message to client
+        showRedemptionSuccessModal(promo);
+
+        // Send WhatsApp to admin (Poar)
+        const adminMsg = `🎁 *NOVA PROMOÇÃO RESGATADA!*\n\nCliente: ${user.name || user.email}\nWhatsApp: ${user.phone}\n\nPromoção: ${promo.description || promo.requiredTargetName}\nBrinde: ${promo.freeCount || 1}x ${promo.rewardTargetName}\n\nEntre em contato para agendar o brinde do cliente.`;
+        // Admin phone may not exist, but try sending to client confirmation
+        const clientMsg = `🎉 *Parabéns ${user.name || 'cliente'}!*\n\nVocê completou a promoção "${promo.description || promo.requiredTargetName}" e ganhou ${promo.freeCount || 1}x ${promo.rewardTargetName}!\n\nA Poar Estética entrará em contato em breve para agendar e confirmar o dia do seu brinde. 💕`;
+        if (typeof sendWhatsApp === 'function') {
+            sendWhatsApp(user.phone, clientMsg).catch(err => console.error('WAHA error:', err));
+        }
+
+        // Reload promotions view
+        const container = document.getElementById('profile-promotions-inner') || document.getElementById('profile-promotions');
+        if (container) renderClientPromotions(container, user.email);
+    } catch(e) {
+        showToast('Erro ao resgatar: ' + e.message, 'error');
+    }
+}
+
+function showRedemptionSuccessModal(promo) {
+    const rewName = promo.rewardTargetName || 'brinde';
+    const freeCount = promo.freeCount || 1;
+    // Use a simple toast + alert combo for clarity
+    showToast('🎉 Promoção resgatada! Aguarde contato da Poar.', 'success');
+    setTimeout(() => {
+        alert(`🎁 Parabéns!\n\nVocê ganhou ${freeCount}x ${rewName}!\n\nUma mensagem foi enviada para a Poar Estética e em breve ela entrará em contato no seu WhatsApp para agendar e confirmar o dia do seu brinde. 💕`);
+    }, 300);
 }
 
 // ========== BUTTON LOADING STATE ==========

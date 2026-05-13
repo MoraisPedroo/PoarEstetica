@@ -161,19 +161,26 @@
         }
 
         /* ========== STOCK BADGE HELPER ========== */
+        /* Linked to admin's product stock:
+           - stockType='quantidade' + qty>0  => "Em estoque" (or "Poucas unidades" if at/below alert)
+           - stockType='requisicao' OR qty=0 => "Sob encomenda"
+        */
         function getStockBadge(product) {
-            if (product.stockType === 'requisicao') {
-                return '<span class="stock-badge stock-request"><i class="fas fa-truck"></i> Sob encomenda</span>';
-            }
             const qty = product.stockQuantity || 0;
             const alert = product.stockAlert || 0;
-            if (qty <= 0) {
-                return '<span class="stock-badge stock-out"><i class="fas fa-times-circle"></i> Esgotado</span>';
+            const inStock = product.stockType === 'quantidade' && qty > 0;
+
+            if (!inStock) {
+                return '<span class="stock-badge stock-request"><i class="fas fa-truck"></i> Sob encomenda</span>';
             }
             if (qty <= alert) {
                 return '<span class="stock-badge stock-low"><i class="fas fa-exclamation-triangle"></i> Poucas unidades</span>';
             }
             return '<span class="stock-badge stock-ok"><i class="fas fa-check-circle"></i> Em estoque</span>';
+        }
+
+        function isOnOrder(product) {
+            return !(product.stockType === 'quantidade' && (product.stockQuantity || 0) > 0);
         }
 
         /* ========== RENDER CATALOG GRID ========== */
@@ -209,7 +216,7 @@
                     ? 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop'
                     : 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=300&fit=crop');
                 const isSvc = item.type === 'servico';
-                const promo = allPromotions.find(p => p.targetId === item.id);
+                const promo = allPromotions.find(p => (p.requiredTargetId || p.targetId) === item.id);
 
                 let badges = '';
                 if (promo) {
@@ -251,21 +258,25 @@
                 ? 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop'
                 : 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=300&fit=crop');
 
-            const promo = allPromotions.find(p => p.targetId === id);
+            const promo = allPromotions.find(p => (p.requiredTargetId || p.targetId) === id);
             let promoHtml = '';
             if (promo && isLoggedIn() && !isAdmin()) {
-                const count = await getClientPromotionProgress(getProfile().email, id, type);
+                const reqTargetId = promo.requiredTargetId || promo.targetId;
+                const reqType = promo.requiredType || promo.type;
+                const count = await getClientPromotionProgress(getProfile().email, reqTargetId, reqType);
                 const required = promo.requiredCount || 5;
-                const progress = count % (required + (promo.freeCount || 1));
-                const pct = Math.round((Math.min(progress, required) / required) * 100);
+                const progress = Math.min(count % required || (count >= required ? required : count % required), required);
+                const pct = Math.round((progress / required) * 100);
                 const remaining = Math.max(0, required - progress);
+                const rewName = promo.rewardTargetName || promo.targetName || 'brinde';
+                const freeC = promo.freeCount || 1;
                 promoHtml =
                     '<div class="promo-card mt-16">' +
                         '<div class="promo-header">' +
                             '<div class="promo-icon"><i class="fas fa-gift"></i></div>' +
                             '<div class="promo-info">' +
-                                '<h4 class="promo-title">' + (promo.description || ('Agende ' + required + 'x e ganhe ' + (promo.freeCount || 1) + ' gratis!')) + '</h4>' +
-                                '<p class="promo-desc">' + (remaining > 0 ? ('Falta' + (remaining > 1 ? 'm' : '') + ' ' + remaining + ' para ganhar!') : 'Resgate disponivel!') + '</p>' +
+                                '<h4 class="promo-title">' + (promo.description || ('Agende ' + required + 'x e ganhe ' + freeC + 'x ' + rewName + ' grátis!')) + '</h4>' +
+                                '<p class="promo-desc">' + (remaining > 0 ? ('Falta' + (remaining > 1 ? 'm' : '') + ' ' + remaining + ' para ganhar!') : 'Resgate disponível!') + '</p>' +
                             '</div>' +
                         '</div>' +
                         '<div class="promo-progress">' +
@@ -282,21 +293,38 @@
                 actionHtml =
                     '<a href="agendar.html" class="btn btn-primary btn-full mt-16 btn-lg"><i class="far fa-calendar-plus"></i> Agendar este servico</a>';
             } else {
-                const isOutOfStock = item.stockType === 'quantidade' && (item.stockQuantity || 0) <= 0;
-                const isRequest = item.stockType === 'requisicao';
-                const maxQty = isRequest ? 99 : (item.stockQuantity || 0);
+                const onOrder = isOnOrder(item);  // true if requisicao OR out of stock
+                const maxQty = onOrder ? 99 : (item.stockQuantity || 0);
 
                 stockInfoHtml = '<div class="mt-12">' + getStockBadge(item) + '</div>';
 
-                if (isRequest && item.deliveryTime) {
-                    stockInfoHtml += '<p class="text-sm text-muted mt-8"><i class="fas fa-truck"></i> Prazo de entrega: ' + item.deliveryTime + '</p>';
-                }
-
-                if (isOutOfStock) {
+                if (onOrder) {
+                    // "Sob encomenda" — product not in stock right now.
+                    // Allow placing an order; admin will contact the client when item arrives.
+                    var deliveryNote = item.deliveryTime
+                        ? 'Prazo estimado: ' + item.deliveryTime
+                        : 'Você será contatada assim que estiver disponível.';
+                    stockInfoHtml +=
+                        '<div class="mt-12" style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(249,115,22,0.06));border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:12px;">' +
+                            '<p class="text-sm" style="color:#92400e;font-weight:600;margin-bottom:4px;">' +
+                                '<i class="fas fa-truck"></i> Produto sob encomenda' +
+                            '</p>' +
+                            '<p class="text-xs" style="color:#92400e;">' +
+                                'Este produto não está em estoque no momento. Assim que estiver disponível, ' +
+                                'a Poar entrará em contato pelo seu WhatsApp para confirmar o pedido. ' + deliveryNote +
+                            '</p>' +
+                        '</div>';
                     actionHtml =
-                        '<p class="text-sm text-muted mt-12" style="text-align:center;"><i class="fas fa-exclamation-circle"></i> Este produto esta esgotado no momento.</p>' +
-                        '<button class="btn btn-primary btn-full mt-16 btn-lg" id="notify-btn" onclick="handleNotifyStock(\'' + id + '\', \'' + item.name.replace(/'/g, "\\'") + '\')">' +
-                            '<i class="fab fa-whatsapp"></i> Quero ser notificado quando estiver disponivel' +
+                        '<div class="flex justify-between items-center mt-16">' +
+                            '<span class="text-sm" style="font-weight:600;color:var(--text-dark);">Quantidade:</span>' +
+                            '<div class="qty-selector">' +
+                                '<button class="qty-btn" onclick="changeQty(-1, ' + maxQty + ')">-</button>' +
+                                '<span class="qty-value" id="detail-qty-value">1</span>' +
+                                '<button class="qty-btn" onclick="changeQty(1, ' + maxQty + ')">+</button>' +
+                            '</div>' +
+                        '</div>' +
+                        '<button class="btn btn-primary btn-full mt-16 btn-lg" id="buy-btn" onclick="handleBuy(\'' + id + '\')" style="background:linear-gradient(135deg,#f59e0b,#f97316);border:none;">' +
+                            '<i class="fab fa-whatsapp"></i> Solicitar sob encomenda' +
                         '</button>';
                 } else {
                     actionHtml =
@@ -309,7 +337,7 @@
                             '</div>' +
                         '</div>' +
                         '<button class="btn btn-primary btn-full mt-16 btn-lg" id="buy-btn" onclick="handleBuy(\'' + id + '\')">' +
-                            '<i class="fas fa-shopping-bag"></i> Comprar' +
+                            '<i class="fas fa-shopping-bag"></i> Solicitar pedido' +
                         '</button>';
                 }
             }
@@ -349,6 +377,8 @@
             const btn = document.getElementById('buy-btn');
             btnLoading(btn, true);
 
+            const onOrder = isOnOrder(product);
+
             try {
                 const profile = getProfile();
                 await addProductOrder({
@@ -361,10 +391,12 @@
                     clientEmail: profile.email,
                     clientPhone: profile.phone || '',
                     clientUid: profile.uid,
-                    deliveryTime: product.stockType === 'requisicao' ? (product.deliveryTime || '') : ''
+                    onOrder: onOrder,
+                    deliveryTime: onOrder ? (product.deliveryTime || 'Sem prazo definido') : ''
                 });
 
-                if (product.stockType === 'quantidade') {
+                if (!onOrder) {
+                    // In-stock product: decrement stock immediately
                     const newQty = Math.max(0, (product.stockQuantity || 0) - detailQty);
                     await updateProduct(productId, { stockQuantity: newQty });
                     const idx = allProducts.findIndex(function(p) { return p.id === productId; });
@@ -373,7 +405,14 @@
 
                 btnLoading(btn, false);
                 closeDetail();
-                showToast('Pedido realizado com sucesso!', 'success');
+                if (onOrder) {
+                    showToast('🛍️ Pedido sob encomenda registrado! Aguarde contato da Poar.', 'success');
+                    setTimeout(function() {
+                        alert('📦 Pedido registrado!\n\nEste produto não está em estoque no momento. Assim que estiver disponível, a Poar entrará em contato no seu WhatsApp para confirmar o pedido. 💕');
+                    }, 300);
+                } else {
+                    showToast('Pedido realizado com sucesso!', 'success');
+                }
                 renderCatalog();
             } catch(e) {
                 btnLoading(btn, false);
