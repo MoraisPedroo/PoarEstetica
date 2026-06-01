@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catalogo - Poar Estetica</title>
+    <title>Catálogo - Poar Estética</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -12,12 +12,12 @@
         <header class="top-header">
             <a href="index.html" class="header-brand">
                 <div class="header-logo">P</div>
-                <div><h1 class="header-title">Poar</h1><p class="header-subtitle">Estetica</p></div>
+                <div><h1 class="header-title">Poar</h1><p class="header-subtitle">Estética</p></div>
             </a>
             <nav class="desktop-nav">
-                <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Inicio</a>
+                <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Início</a>
                 <a href="agendar.html" class="nav-link"><i class="far fa-calendar-plus"></i> Agendar</a>
-                <a href="catalogo.html" class="nav-link active"><i class="fas fa-th-large"></i> Catalogo</a>
+                <a href="catalogo.html" class="nav-link active"><i class="fas fa-th-large"></i> Catálogo</a>
             </nav>
             <div class="header-actions">
                 <a href="login.html" class="header-link" id="header-user-btn"><i class="far fa-user"></i><span id="header-user-name">Entrar</span></a>
@@ -29,21 +29,21 @@
             <div class="section" style="padding-top:16px; padding-bottom:0;">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" class="form-control" id="search-input" placeholder="Buscar servicos e produtos..." oninput="handleSearch()">
+                    <input type="text" class="form-control" id="search-input" placeholder="Buscar serviços e produtos..." oninput="handleSearch()">
                 </div>
             </div>
 
             <!-- Filtros -->
             <div class="filter-row" id="catalog-filters">
                 <button class="chip active" onclick="filterCatalog('todos', this)">Todos</button>
-                <button class="chip" onclick="filterCatalog('servicos', this)"><i class="fas fa-spa"></i> Servicos</button>
+                <button class="chip" onclick="filterCatalog('serviços', this)"><i class="fas fa-spa"></i> Serviços</button>
                 <button class="chip" onclick="filterCatalog('produtos', this)"><i class="fas fa-pump-soap"></i> Produtos</button>
             </div>
 
-            <!-- Promocoes do cliente -->
+            <!-- Promoções do cliente -->
             <div class="section hidden" id="catalog-promo-section" style="padding-bottom:0;">
                 <div class="section-header">
-                    <h3 class="section-title"><i class="fas fa-gift" style="color:var(--warning);"></i> Promocoes para voce</h3>
+                    <h3 class="section-title"><i class="fas fa-gift" style="color:var(--warning);"></i> Promoções para você</h3>
                 </div>
                 <div id="catalog-promotions" style="padding:0 20px;"></div>
             </div>
@@ -82,17 +82,17 @@
                 <div style="width:56px;height:56px;border-radius:50%;background:var(--accent-light);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
                     <i class="fas fa-user-lock" style="font-size:1.3rem;color:var(--accent);"></i>
                 </div>
-                <h3 style="font-size:1.1rem;font-weight:700;color:var(--text-dark);margin-bottom:8px;">Faca login para continuar</h3>
-                <p class="text-sm text-muted">Voce precisa estar logado para realizar compras.</p>
+                <h3 style="font-size:1.1rem;font-weight:700;color:var(--text-dark);margin-bottom:8px;">Faça login para continuar</h3>
+                <p class="text-sm text-muted">Você precisa estar logado para realizar compras.</p>
                 <a href="login.html" class="btn btn-primary btn-full btn-lg mt-16"><i class="fas fa-sign-in-alt"></i> Entrar na conta</a>
                 <button class="btn btn-ghost btn-full mt-8" onclick="closeLoginPrompt()" style="color:var(--text-muted);">Voltar</button>
             </div>
         </div>
 
         <nav class="bottom-nav">
-            <a href="index.html" class="nav-btn"><i class="fas fa-home"></i><span>Inicio</span></a>
+            <a href="index.html" class="nav-btn"><i class="fas fa-home"></i><span>Início</span></a>
             <a href="agendar.html" class="nav-btn"><i class="far fa-calendar-plus"></i><span>Agendar</span></a>
-            <a href="catalogo.html" class="nav-btn active"><i class="fas fa-th-large"></i><span>Catalogo</span></a>
+            <a href="catalogo.html" class="nav-btn active"><i class="fas fa-th-large"></i><span>Catálogo</span></a>
             <a href="login.html" class="nav-btn"><i class="far fa-user"></i><span>Entrar</span></a>
         </nav>
     </div>
@@ -138,6 +138,8 @@
 
             if (window.location.hash === '#produtos') {
                 filterCatalog('produtos', document.querySelectorAll('#catalog-filters .chip')[2]);
+            } else if (window.location.hash === '#servicos') {
+                filterCatalog('serviços', document.querySelectorAll('#catalog-filters .chip')[1]);
             }
         });
 
@@ -189,7 +191,7 @@
             const empty = document.getElementById('catalog-empty');
 
             let items = [];
-            if (currentFilter === 'todos' || currentFilter === 'servicos') {
+            if (currentFilter === 'todos' || currentFilter === 'serviços') {
                 allServices.forEach(s => items.push({ ...s, type: 'servico' }));
             }
             if (currentFilter === 'todos' || currentFilter === 'produtos') {
@@ -220,7 +222,7 @@
 
                 let badges = '';
                 if (promo) {
-                    badges += '<div style="position:absolute;top:6px;left:6px;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;padding:3px 8px;border-radius:10px;font-size:0.55rem;font-weight:700;"><i class="fas fa-gift"></i> Promocao</div>';
+                    badges += '<div style="position:absolute;top:6px;left:6px;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;padding:3px 8px;border-radius:10px;font-size:0.55rem;font-weight:700;"><i class="fas fa-gift"></i> Promoção</div>';
                 }
                 if (!isSvc) {
                     badges += '<div style="position:absolute;bottom:6px;left:6px;">' + getStockBadge(item) + '</div>';
@@ -291,9 +293,9 @@
 
             if (isSvc) {
                 actionHtml =
-                    '<a href="agendar.html" class="btn btn-primary btn-full mt-16 btn-lg"><i class="far fa-calendar-plus"></i> Agendar este servico</a>';
+                    '<a href="agendar.html?service=' + encodeURIComponent(id) + '" class="btn btn-primary btn-full mt-16 btn-lg"><i class="far fa-calendar-plus"></i> Agendar este serviço</a>';
             } else {
-                const onOrder = isOnOrder(item);  // true if requisicao OR out of stock
+                const onOrder = isOnOrder(item);  // true if requisição OR out of stock
                 const maxQty = onOrder ? 99 : (item.stockQuantity || 0);
 
                 stockInfoHtml = '<div class="mt-12">' + getStockBadge(item) + '</div>';
@@ -433,7 +435,7 @@
                 const profile = getProfile();
                 await addStockNotification(productId, productName, profile.name, profile.email, profile.phone);
                 btnLoading(btn, false);
-                showToast('Voce sera notificado via WhatsApp quando este produto estiver disponivel!', 'success');
+                showToast('Você será notificado via WhatsApp quando este produto estiver disponivel!', 'success');
             } catch(e) {
                 btnLoading(btn, false);
                 console.error(e);
@@ -469,7 +471,7 @@
                     '<input type="text" class="form-control" id="edit-name" value="' + (item.name || '') + '">' +
                 '</div>' +
                 '<div class="form-group">' +
-                    '<label class="form-label">Descricao</label>' +
+                    '<label class="form-label">Descrição</label>' +
                     '<textarea class="form-control" id="edit-description" rows="3">' + (item.description || '') + '</textarea>' +
                 '</div>' +
                 '<div class="form-group">' +
@@ -481,11 +483,11 @@
                 fieldsHtml +=
                     '<div class="form-row">' +
                         '<div class="form-group">' +
-                            '<label class="form-label">Duracao (min)</label>' +
+                            '<label class="form-label">Duração (min)</label>' +
                             '<input type="number" class="form-control" id="edit-duration" min="1" value="' + (item.duration || 30) + '">' +
                         '</div>' +
                         '<div class="form-group">' +
-                            '<label class="form-label">Preparacao (min)</label>' +
+                            '<label class="form-label">Preparação (min)</label>' +
                             '<input type="number" class="form-control" id="edit-prepTime" min="0" value="' + (item.prepTime || 0) + '">' +
                         '</div>' +
                     '</div>';
@@ -496,7 +498,7 @@
                         '<label class="form-label">Tipo de estoque</label>' +
                         '<div style="display:flex;gap:8px;">' +
                             '<button class="chip ' + (!isReq ? 'active' : '') + '" id="edit-stock-qty-btn" onclick="toggleStockType(\'quantidade\')"><i class="fas fa-boxes"></i> Quantidade</button>' +
-                            '<button class="chip ' + (isReq ? 'active' : '') + '" id="edit-stock-req-btn" onclick="toggleStockType(\'requisicao\')"><i class="fas fa-truck"></i> Sob encomenda</button>' +
+                            '<button class="chip ' + (isReq ? 'active' : '') + '" id="edit-stock-req-btn" onclick="toggleStockType(\'requisição\')"><i class="fas fa-truck"></i> Sob encomenda</button>' +
                         '</div>' +
                         '<input type="hidden" id="edit-stockType" value="' + (item.stockType || 'quantidade') + '">' +
                     '</div>' +
@@ -613,7 +615,7 @@
 
                 btnLoading(btn, false);
                 closeEdit();
-                showToast('Alteracoes salvas!', 'success');
+                showToast('Alterações salvas!', 'success');
                 renderCatalog();
             } catch(e) {
                 btnLoading(btn, false);

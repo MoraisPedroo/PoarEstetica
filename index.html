@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Poar Estetica</title>
+    <title>Poar Estética</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -12,12 +12,12 @@
         <header class="top-header">
             <a href="index.html" class="header-brand">
                 <div class="header-logo">P</div>
-                <div><h1 class="header-title">Poar</h1><p class="header-subtitle">Estetica</p></div>
+                <div><h1 class="header-title">Poar</h1><p class="header-subtitle">Estética</p></div>
             </a>
             <nav class="desktop-nav" aria-label="Menu principal">
-                <a href="index.html" class="nav-link active"><i class="fas fa-home"></i> Inicio</a>
+                <a href="index.html" class="nav-link active"><i class="fas fa-home"></i> Início</a>
                 <a href="agendar.html" class="nav-link"><i class="far fa-calendar-plus"></i> Agendar</a>
-                <a href="catalogo.html" class="nav-link"><i class="fas fa-th-large"></i> Catalogo</a>
+                <a href="catalogo.html" class="nav-link"><i class="fas fa-th-large"></i> Catálogo</a>
             </nav>
             <div class="header-actions">
                 <a href="login.html" class="header-link" id="header-user-btn">
@@ -37,7 +37,7 @@
                         <span class="edit-inline hidden" id="edit-hero-title" onclick="editHeroText('heroTitle')"><i class="fas fa-pen"></i></span>
                         <p class="hero-subtitle" id="hero-subtitle">Cuidados essenciais para sua pele radiante</p>
                         <span class="edit-inline hidden" id="edit-hero-subtitle" onclick="editHeroText('heroSubtitle')"><i class="fas fa-pen"></i></span>
-                        <a href="catalogo.html" class="hero-btn"><i class="fas fa-arrow-right"></i> Ver Catalogo e Servicos</a>
+                        <a href="catalogo.html" class="hero-btn"><i class="fas fa-arrow-right"></i> Ver Catálogo e Serviços</a>
                     </div>
                     <!-- Admin: edit background -->
                     <button class="edit-badge hidden" id="edit-hero-bg" onclick="editHeroBackground()" style="top:12px;right:12px;width:34px;height:34px;font-size:0.75rem;" title="Alterar fundo">
@@ -49,7 +49,7 @@
             <!-- Promoções ativas (para cliente logado) -->
             <div class="section hidden" id="promo-section">
                 <div class="section-header">
-                    <h3 class="section-title"><i class="fas fa-gift" style="color:var(--warning);"></i> Suas Promocoes</h3>
+                    <h3 class="section-title"><i class="fas fa-gift" style="color:var(--warning);"></i> Suas Promoções</h3>
                 </div>
                 <div id="home-promotions" style="padding: 0 20px;"></div>
             </div>
@@ -57,8 +57,8 @@
             <!-- Serviços -->
             <div class="section">
                 <div class="section-header">
-                    <h3 class="section-title">Servicos Populares</h3>
-                    <a href="catalogo.html" class="section-link">Ver todos <i class="fas fa-chevron-right" style="font-size:0.6rem;"></i></a>
+                    <h3 class="section-title">Serviços Populares</h3>
+                    <a href="catalogo.html#servicos" class="section-link">Ver todos <i class="fas fa-chevron-right" style="font-size:0.6rem;"></i></a>
                 </div>
             </div>
             <div class="scroll-row" id="home-services"></div>
@@ -93,9 +93,9 @@
         <a href="https://wa.me/5500000000000" target="_blank" class="fab-whatsapp" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
 
         <nav class="bottom-nav" aria-label="Menu principal">
-            <a href="index.html" class="nav-btn active"><i class="fas fa-home"></i><span>Inicio</span></a>
+            <a href="index.html" class="nav-btn active"><i class="fas fa-home"></i><span>Início</span></a>
             <a href="agendar.html" class="nav-btn"><i class="far fa-calendar-plus"></i><span>Agendar</span></a>
-            <a href="catalogo.html" class="nav-btn"><i class="fas fa-th-large"></i><span>Catalogo</span></a>
+            <a href="catalogo.html" class="nav-btn"><i class="fas fa-th-large"></i><span>Catálogo</span></a>
             <a href="login.html" class="nav-btn"><i class="far fa-user"></i><span>Entrar</span></a>
         </nav>
     </div>
@@ -164,7 +164,7 @@
                     '<input type="text" class="form-control" id="edit-name" value="' + (item.name || '') + '">' +
                 '</div>' +
                 '<div class="form-group">' +
-                    '<label class="form-label">Descricao</label>' +
+                    '<label class="form-label">Descrição</label>' +
                     '<textarea class="form-control" id="edit-description" rows="3">' + (item.description || '') + '</textarea>' +
                 '</div>' +
                 '<div class="form-group">' +
@@ -176,11 +176,11 @@
                 fieldsHtml +=
                     '<div class="form-row">' +
                         '<div class="form-group">' +
-                            '<label class="form-label">Duracao (min)</label>' +
+                            '<label class="form-label">Duração (min)</label>' +
                             '<input type="number" class="form-control" id="edit-duration" min="1" value="' + (item.duration || 30) + '">' +
                         '</div>' +
                         '<div class="form-group">' +
-                            '<label class="form-label">Preparacao (min)</label>' +
+                            '<label class="form-label">Preparação (min)</label>' +
                             '<input type="number" class="form-control" id="edit-prepTime" min="0" value="' + (item.prepTime || 0) + '">' +
                         '</div>' +
                     '</div>';
@@ -191,7 +191,7 @@
                         '<label class="form-label">Tipo de estoque</label>' +
                         '<div style="display:flex;gap:8px;">' +
                             '<button class="chip ' + (!isReq ? 'active' : '') + '" id="edit-stock-qty-btn" onclick="toggleStockType(\'quantidade\')"><i class="fas fa-boxes"></i> Quantidade</button>' +
-                            '<button class="chip ' + (isReq ? 'active' : '') + '" id="edit-stock-req-btn" onclick="toggleStockType(\'requisicao\')"><i class="fas fa-truck"></i> Sob encomenda</button>' +
+                            '<button class="chip ' + (isReq ? 'active' : '') + '" id="edit-stock-req-btn" onclick="toggleStockType(\'requisição\')"><i class="fas fa-truck"></i> Sob encomenda</button>' +
                         '</div>' +
                         '<input type="hidden" id="edit-stockType" value="' + (item.stockType || 'quantidade') + '">' +
                     '</div>' +
@@ -296,7 +296,7 @@
                 }
                 btnLoading(btn, false);
                 closeEdit();
-                showToast('Alteracoes salvas!', 'success');
+                showToast('Alterações salvas!', 'success');
                 renderHomeServices();
                 renderHomeProducts();
             } catch(e) {

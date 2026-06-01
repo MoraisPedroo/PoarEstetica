@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entrar - Poar Estetica</title>
+    <title>Entrar - Poar Estética</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -71,12 +71,12 @@
         <header class="top-header">
             <a href="index.html" class="header-brand">
                 <div class="header-logo" id="header-logo-container">P</div>
-                <div><h1 class="header-title">Poar</h1><p class="header-subtitle">Estetica</p></div>
+                <div><h1 class="header-title">Poar</h1><p class="header-subtitle">Estética</p></div>
             </a>
             <nav class="desktop-nav">
-                <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Inicio</a>
+                <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Início</a>
                 <a href="agendar.html" class="nav-link"><i class="far fa-calendar-plus"></i> Agendar</a>
-                <a href="catalogo.html" class="nav-link"><i class="fas fa-th-large"></i> Catalogo</a>
+                <a href="catalogo.html" class="nav-link"><i class="fas fa-th-large"></i> Catálogo</a>
             </nav>
             <div class="header-actions">
                 <a href="login.html" class="header-link" id="header-user-btn"><i class="far fa-user"></i><span id="header-user-name">Entrar</span></a>
@@ -118,7 +118,7 @@
                     </button>
 
                     <p class="text-xs text-muted mt-16 text-center">
-                        <i class="fas fa-info-circle"></i> O e-mail <strong>admin@poar.com</strong> e reconhecido automaticamente como gestao.
+                        <i class="fas fa-info-circle"></i> O e-mail <strong>admin@poar.com</strong> e reconhecido automaticamente como gestão.
                     </p>
                 </div>
             </div>
@@ -140,7 +140,7 @@
                     </button>
 
                     <div id="profile-gestao-link" class="hidden mb-16">
-                        <a href="gestao.html" class="btn btn-dark btn-full btn-lg"><i class="fas fa-cog"></i> Painel de Gestao</a>
+                        <a href="gestao.html" class="btn btn-dark btn-full btn-lg"><i class="fas fa-cog"></i> Painel de Gestão</a>
                     </div>
 
                     <div class="card mb-16" style="text-align:left;" id="profile-bookings">
@@ -184,12 +184,51 @@
                 <div class="form-group">
                     <label class="form-label">Telefone (WhatsApp) <span class="text-xs" style="color:var(--accent, #e91e63);">*</span></label>
                     <input type="tel" class="form-control" id="reg-phone" placeholder="(00) 00000-0000" required>
-                    <p class="form-hint">Numero necessario para receber notificacoes e lembretes via WhatsApp.</p>
+                    <p class="form-hint">Número necessario para receber notificações e lembretes via WhatsApp.</p>
                 </div>
                 <button type="submit" class="btn btn-primary btn-full btn-lg" id="btn-register">
                     <i class="fas fa-user-plus"></i> Criar conta
                 </button>
             </form>
+        </div>
+
+        <!-- ===== MODAL: Verificar código via WhatsApp ===== -->
+        <div class="modal-overlay" id="verify-overlay" onclick="closeVerifyCodeModal()"></div>
+        <div class="bottom-sheet" id="verify-sheet">
+            <div class="bottom-sheet-handle"></div>
+            <div class="flex items-center justify-between mb-16">
+                <h3 class="bottom-sheet-title" style="margin-bottom:0;">
+                    <i class="fab fa-whatsapp" style="color:#25d366;"></i> Verificar WhatsApp
+                </h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeVerifyCodeModal()" style="color:var(--text-muted);"><i class="fas fa-times"></i></button>
+            </div>
+            <p class="text-sm text-muted mb-16">
+                Enviamos um código de 6 dígitos para o seu WhatsApp:
+                <strong style="color:var(--text-dark);" id="verify-phone-display"></strong>
+            </p>
+            <form id="verify-form" onsubmit="handleVerifyCode(event)" style="text-align:left;">
+                <div class="form-group">
+                    <label class="form-label">Código de verificação</label>
+                    <input type="text" class="form-control verify-code-field"
+                        id="verify-code-input"
+                        inputmode="numeric"
+                        pattern="\d{6}"
+                        maxlength="6"
+                        placeholder="000000"
+                        autocomplete="one-time-code"
+                        required>
+                    <p class="form-hint" id="verify-error" style="color:var(--danger);min-height:1em;"></p>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full btn-lg" id="btn-verify-code">
+                    <i class="fas fa-check"></i> Confirmar código
+                </button>
+                <button type="button" class="btn btn-ghost btn-full mt-12" id="btn-resend-code" onclick="resendVerificationCode()">
+                    <i class="fas fa-redo"></i> Reenviar código
+                </button>
+            </form>
+            <p class="text-xs text-muted text-center mt-16">
+                <i class="fas fa-info-circle"></i> O código é válido por 10 minutos.
+            </p>
         </div>
 
         <!-- ===== MODAL: Editar Perfil ===== -->
@@ -241,7 +280,7 @@
                 <div class="form-group">
                     <label class="form-label">Texto do logo</label>
                     <input type="text" class="form-control" id="logo-edit-text" placeholder="Ex: P, Poar, etc." maxlength="10">
-                    <p class="form-hint">Texto exibido quando nao ha imagem. Padrao: P</p>
+                    <p class="form-hint">Texto exibido quando não ha imagem. Padrao: P</p>
                 </div>
                 <div class="logo-edit-row">
                     <label>Tamanho</label>
@@ -266,9 +305,9 @@
         </div>
 
         <nav class="bottom-nav">
-            <a href="index.html" class="nav-btn"><i class="fas fa-home"></i><span>Inicio</span></a>
+            <a href="index.html" class="nav-btn"><i class="fas fa-home"></i><span>Início</span></a>
             <a href="agendar.html" class="nav-btn"><i class="far fa-calendar-plus"></i><span>Agendar</span></a>
-            <a href="catalogo.html" class="nav-btn"><i class="fas fa-th-large"></i><span>Catalogo</span></a>
+            <a href="catalogo.html" class="nav-btn"><i class="fas fa-th-large"></i><span>Catálogo</span></a>
             <a href="login.html" class="nav-btn active"><i class="far fa-user"></i><span>Entrar</span></a>
         </nav>
     </div>
@@ -476,9 +515,9 @@
             } catch (err) {
                 btnLoading(btn, false);
                 let msg = 'Erro ao entrar.';
-                if (err.code === 'auth/user-not-found') msg = 'E-mail nao encontrado. Crie uma conta.';
+                if (err.code === 'auth/user-not-found') msg = 'E-mail não encontrado. Crie uma conta.';
                 else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') msg = 'Senha incorreta.';
-                else if (err.code === 'auth/invalid-email') msg = 'E-mail invalido.';
+                else if (err.code === 'auth/invalid-email') msg = 'E-mail inválido.';
                 else if (err.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Tente mais tarde.';
                 showToast(msg, 'error');
             }
@@ -487,6 +526,10 @@
         // ===== REGISTER MODAL =====
         function openRegisterModal() { openModal('register-overlay', 'register-sheet'); }
         function closeRegisterModal() { closeModal('register-overlay', 'register-sheet'); }
+
+        // Pending registration data — waits for WAHA code verification.
+        let pendingRegistration = null;
+        let resendCooldownTimer = null;
 
         async function handleRegister(e) {
             e.preventDefault();
@@ -501,21 +544,122 @@
                 return;
             }
 
+            // Validate email format
+            if (!isValidEmail(email)) {
+                showToast('E-mail inválido. Use um endereço como nome@dominio.com', 'error');
+                return;
+            }
+
             // Validate phone — mandatory, minimum 10 digits
             const phoneDigits = phone.replace(/\D/g, '');
             if (!phone || phoneDigits.length < 10) {
-                showToast('Informe um telefone valido com pelo menos 10 digitos (DDD + numero).', 'error');
+                showToast('Informe um telefone válido com pelo menos 10 dígitos (DDD + número).', 'error');
                 return;
             }
 
             btnLoading(btn, true);
 
             try {
+                const code = await createVerificationCode(phone, email, name);
+                const msg = `Olá ${name}! 💕\n\nSeu código de confirmação na Poar Estética é:\n\n*${code}*\n\nUse este código para concluir seu cadastro. Ele expira em 10 minutos.`;
+                if (typeof sendWhatsApp === 'function') {
+                    try { await sendWhatsApp(phone, msg); }
+                    catch (err) { console.error('WAHA send error:', err); }
+                }
+
+                // Stash the form data — only used after the code is verified
+                pendingRegistration = { name, email, password, phone };
+
+                btnLoading(btn, false);
+                closeRegisterModal();
+                openVerifyCodeModal(phone);
+            } catch (err) {
+                btnLoading(btn, false);
+                showToast('Erro ao enviar código: ' + err.message, 'error');
+            }
+        }
+
+        function openVerifyCodeModal(phone) {
+            document.getElementById('verify-phone-display').textContent = phone;
+            document.getElementById('verify-code-input').value = '';
+            document.getElementById('verify-error').textContent = '';
+            openModal('verify-overlay', 'verify-sheet');
+            setTimeout(() => document.getElementById('verify-code-input').focus(), 350);
+            startResendCooldown(60);
+        }
+
+        function closeVerifyCodeModal() {
+            closeModal('verify-overlay', 'verify-sheet');
+            if (resendCooldownTimer) { clearInterval(resendCooldownTimer); resendCooldownTimer = null; }
+        }
+
+        function startResendCooldown(seconds) {
+            const btn = document.getElementById('btn-resend-code');
+            if (!btn) return;
+            let s = seconds;
+            btn.disabled = true;
+            btn.textContent = `Reenviar código em ${s}s`;
+            if (resendCooldownTimer) clearInterval(resendCooldownTimer);
+            resendCooldownTimer = setInterval(() => {
+                s--;
+                if (s <= 0) {
+                    clearInterval(resendCooldownTimer);
+                    resendCooldownTimer = null;
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-redo"></i> Reenviar código';
+                } else {
+                    btn.textContent = `Reenviar código em ${s}s`;
+                }
+            }, 1000);
+        }
+
+        async function resendVerificationCode() {
+            if (!pendingRegistration) return;
+            const { name, email, phone } = pendingRegistration;
+            try {
+                const code = await createVerificationCode(phone, email, name);
+                const msg = `Olá ${name}! 💕\n\nSeu novo código de confirmação na Poar Estética é:\n\n*${code}*\n\nEle expira em 10 minutos.`;
+                if (typeof sendWhatsApp === 'function') {
+                    await sendWhatsApp(phone, msg).catch(err => console.error('WAHA error:', err));
+                }
+                showToast('Código reenviado!', 'success');
+                startResendCooldown(60);
+            } catch(e) {
+                showToast('Erro ao reenviar: ' + e.message, 'error');
+            }
+        }
+
+        async function handleVerifyCode(e) {
+            if (e) e.preventDefault();
+            if (!pendingRegistration) return;
+            const input = document.getElementById('verify-code-input');
+            const code = (input.value || '').trim();
+            const errorEl = document.getElementById('verify-error');
+            const btn = document.getElementById('btn-verify-code');
+            errorEl.textContent = '';
+
+            if (!/^\d{6}$/.test(code)) {
+                errorEl.textContent = 'Digite os 6 dígitos do código.';
+                return;
+            }
+
+            btnLoading(btn, true);
+            try {
+                const result = await checkVerificationCode(pendingRegistration.phone, code);
+                if (!result.ok) {
+                    errorEl.textContent = result.reason;
+                    btnLoading(btn, false);
+                    return;
+                }
+                // Code OK — create the real account now
+                const { name, email, password, phone } = pendingRegistration;
                 await registerUser(email, password, name, phone);
+                await deleteVerificationCode(phone);
                 const profile = await refreshProfile();
 
-                closeRegisterModal();
-                showToast('Conta criada com sucesso!', 'success');
+                pendingRegistration = null;
+                closeVerifyCodeModal();
+                showToast('Conta verificada e criada com sucesso!', 'success');
 
                 if (profile?.role === 'gestao') {
                     setTimeout(() => window.location.href = 'gestao.html', 500);
@@ -527,10 +671,10 @@
             } catch (err) {
                 btnLoading(btn, false);
                 let msg = 'Erro ao criar conta.';
-                if (err.code === 'auth/email-already-in-use') msg = 'Este e-mail ja esta cadastrado. Faca login.';
+                if (err.code === 'auth/email-already-in-use') msg = 'Este e-mail já está cadastrado. Faça login.';
                 else if (err.code === 'auth/weak-password') msg = 'Senha muito fraca. Use pelo menos 6 caracteres.';
-                else if (err.code === 'auth/invalid-email') msg = 'E-mail invalido.';
-                showToast(msg, 'error');
+                else if (err.code === 'auth/invalid-email') msg = 'E-mail inválido.';
+                errorEl.textContent = msg;
             }
         }
 
@@ -546,7 +690,7 @@
             document.getElementById('profile-email').textContent = user.email;
             document.getElementById('profile-phone').innerHTML = user.phone
                 ? `<i class="fab fa-whatsapp" style="color:#25d366;"></i> ${user.phone}`
-                : '<i class="fas fa-phone-slash"></i> Telefone nao informado';
+                : '<i class="fas fa-phone-slash"></i> Telefone não informado';
 
             // Avatar
             const avatarEl = document.getElementById('profile-avatar');

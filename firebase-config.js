@@ -36,9 +36,76 @@ async function registerUser(email, password, name, phone) {
     await db.collection('users').doc(uid).set({
         email, name, phone: phone || '', role,
         profileImage: '',
+        phoneVerified: true,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     return cred.user;
+}
+
+// ========== PHONE VERIFICATION (via WAHA code) ==========
+// Validates a Brazilian email format (loosely).
+function isValidEmail(email) {
+    if (!email || typeof email !== 'string') return false;
+    // Basic RFC-lite: local@domain.tld, no spaces, at least one dot in the domain.
+    const re = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+    return re.test(email.trim());
+}
+
+// Generates a 6-digit numeric code as a string.
+function generateVerificationCode() {
+    return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+// Normalises a Brazilian phone string -> digits-only.
+function normalisePhone(phone) {
+    return (phone || '').replace(/\D/g, '');
+}
+
+// Creates (or overwrites) a verification record keyed by phone digits.
+// Stores the code, target email/name, expiry, and attempt counter.
+async function createVerificationCode(phone, email, name) {
+    const digits = normalisePhone(phone);
+    if (!digits) throw new Error('Telefone inválido');
+    const code = generateVerificationCode();
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+    await db.collection('verificationCodes').doc(digits).set({
+        phone: digits,
+        email: (email || '').toLowerCase().trim(),
+        name: name || '',
+        code,
+        expiresAt,
+        attempts: 0,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    return code;
+}
+
+// Checks a code submitted by the user. Returns { ok: true, data } or { ok: false, reason }.
+async function checkVerificationCode(phone, submittedCode) {
+    const digits = normalisePhone(phone);
+    const ref = db.collection('verificationCodes').doc(digits);
+    const snap = await ref.get();
+    if (!snap.exists) return { ok: false, reason: 'Código expirado ou inexistente. Reenvie o código.' };
+    const data = snap.data();
+
+    if (Date.now() > (data.expiresAt || 0)) {
+        return { ok: false, reason: 'Código expirado. Reenvie o código.' };
+    }
+    if ((data.attempts || 0) >= 5) {
+        return { ok: false, reason: 'Muitas tentativas. Reenvie o código.' };
+    }
+    if (String(submittedCode).trim() !== String(data.code)) {
+        await ref.update({ attempts: (data.attempts || 0) + 1 });
+        const remaining = 4 - (data.attempts || 0);
+        return { ok: false, reason: `Código incorreto. Restam ${remaining} tentativa${remaining === 1 ? '' : 's'}.` };
+    }
+    return { ok: true, data };
+}
+
+async function deleteVerificationCode(phone) {
+    const digits = normalisePhone(phone);
+    try { await db.collection('verificationCodes').doc(digits).delete(); }
+    catch(e) { /* ignore */ }
 }
 
 async function logoutUser() { await auth.signOut(); }
@@ -259,7 +326,9 @@ async function getSiteConfig() {
         heroTitle: 'A sua Beleza, Elevada',
         heroSubtitle: 'Cuidados essenciais para sua pele radiante',
         heroTag: 'Bem-vinda',
-        heroBackground: ''
+        heroBackground: '',
+        whatsappName: '',
+        whatsappNumber: ''
     };
 }
 
@@ -292,15 +361,10 @@ function pickAndUploadImage(storagePath) {
 }
 
 // ========== WAHA (WhatsApp) ==========
-const WAHA_DIRECT_URL = "http://136.115.81.162:3000/api/sendText";
-const WAHA_PROXY_URL = "/api/waha"; // Vercel serverless proxy (HTTPS safe)
-const WAHA_API_KEY = "segredo123";
+const WAHA_PROXY_URL = "/api/waha";
 const WAHA_SESSION = "default";
 
-// Use proxy on HTTPS (Vercel deploy), direct on HTTP (localhost)
-function getWahaUrl() {
-    return window.location.protocol === 'https:' ? WAHA_PROXY_URL : WAHA_DIRECT_URL;
-}
+function getWahaUrl() { return WAHA_PROXY_URL; }
 
 function getPhoneVariations(rawPhone) {
     let tel = rawPhone.replace(/\D/g, '');
@@ -328,24 +392,18 @@ function removeAccents(str) {
 }
 
 /**
- * Send WhatsApp message via WAHA.
- * ALWAYS sends to BOTH phone variations (with and without 9).
- * Uses Vercel proxy when on HTTPS to avoid Mixed Content error.
  */
 async function sendWhatsApp(phone, message) {
     const chatIds = getPhoneVariations(phone);
     const cleanMessage = removeAccents(message);
     const url = getWahaUrl();
-    const isProxy = url === WAHA_PROXY_URL;
     const results = [];
-    // Send to ALL variations — do NOT break on first success
+    // Send to ALL variations — do NOT break on first success.
     for (const chatId of chatIds) {
         try {
-            const headers = { 'Content-Type': 'application/json' };
-            if (!isProxy) headers['X-Api-Key'] = WAHA_API_KEY;
             const res = await fetch(url, {
                 method: 'POST',
-                headers,
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     chatId,
                     text: cleanMessage,
@@ -418,9 +476,9 @@ async function seedDemoDataIfEmpty() {
     const svcSnap = await db.collection('services').limit(1).get();
     if (svcSnap.empty) {
         const demoServices = [
-            { name: 'Limpeza de Pele', description: 'Limpeza profunda com extracao e hidratacao.', price: 120, duration: 60, prepTime: 15, image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop' },
+            { name: 'Limpeza de Pele', description: 'Limpeza profunda com extração e hidratacao.', price: 120, duration: 60, prepTime: 15, image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop' },
             { name: 'Massagem Relaxante', description: 'Massagem corporal com oleos essenciais.', price: 150, duration: 50, prepTime: 10, image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=300&fit=crop' },
-            { name: 'Peeling Facial', description: 'Renovacao celular com acidos profissionais.', price: 180, duration: 45, prepTime: 20, image: 'https://images.unsplash.com/photo-1552693673-1bf958298935?w=400&h=300&fit=crop' },
+            { name: 'Peeling Facial', description: 'Renovação celular com acidos profissionais.', price: 180, duration: 45, prepTime: 20, image: 'https://images.unsplash.com/photo-1552693673-1bf958298935?w=400&h=300&fit=crop' },
             { name: 'Design de Sobrancelhas', description: 'Modelagem personalizada com henna ou tintura.', price: 60, duration: 30, prepTime: 5, image: 'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?w=400&h=300&fit=crop' },
             { name: 'Drenagem Linfatica', description: 'Tecnica suave para reducao de inchaco e retencao.', price: 140, duration: 60, prepTime: 10, image: 'https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=400&h=300&fit=crop' }
         ];
@@ -433,8 +491,8 @@ async function seedDemoDataIfEmpty() {
         const demoProducts = [
             { name: 'Protetor Solar FPS50', description: 'Protecao solar de alta performance, toque seco.', price: 89.90, stockType: 'quantidade', stockQuantity: 10, stockAlert: 3, image: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=300&fit=crop' },
             { name: 'Serum Vitamina C', description: 'Antioxidante potente para luminosidade.', price: 120, stockType: 'requisicao', deliveryTime: '3 a 5 dias uteis', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&h=300&fit=crop' },
-            { name: 'Hidratante Facial', description: 'Hidratacao profunda com acido hialuronico.', price: 75, stockType: 'quantidade', stockQuantity: 8, stockAlert: 2, image: 'https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=400&h=300&fit=crop' },
-            { name: 'Agua Micelar', description: 'Limpeza suave e eficaz para todos os tipos de pele.', price: 45, stockType: 'quantidade', stockQuantity: 15, stockAlert: 5, image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=300&fit=crop' }
+            { name: 'Hidratante Facial', description: 'Hidratação profunda com acido hialuronico.', price: 75, stockType: 'quantidade', stockQuantity: 8, stockAlert: 2, image: 'https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=400&h=300&fit=crop' },
+            { name: 'Água Micelar', description: 'Limpeza suave e eficaz para todos os tipos de pele.', price: 45, stockType: 'quantidade', stockQuantity: 15, stockAlert: 5, image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=300&fit=crop' }
         ];
         for (const p of demoProducts) {
             await db.collection('products').add({ ...p, createdAt: firebase.firestore.FieldValue.serverTimestamp() });

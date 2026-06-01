@@ -27,15 +27,11 @@ const authReadyPromise = new Promise(r => { _authReadyResolve = r; });
     });
 })();
 
-/** Wait for Firebase Auth to resolve. Returns user profile or null. */
 async function initAuth() {
     if (authReady) return currentUserProfile;
     return authReadyPromise;
 }
 
-/**
- * Force-refresh user profile from Firestore (use after login/register).
- */
 async function refreshProfile() {
     const user = auth.currentUser;
     if (user) {
@@ -94,6 +90,17 @@ function fmtPrice(v) {
     return parseFloat(v).toFixed(2).replace('.', ',');
 }
 
+function escapeHtml(v) {
+    if (v === null || v === undefined) return '';
+    return String(v)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+const esc = escapeHtml;
+
 function formatDateBR(dateStr) {
     return new Date(dateStr + 'T12:00:00').toLocaleDateString('pt-BR', {
         weekday: 'long', day: 'numeric', month: 'long'
@@ -118,12 +125,39 @@ function minToTime(m) {
 // ========== PHONE MASK ==========
 function applyPhoneMask(el) {
     if (!el) return;
+    el.setAttribute('inputmode', 'tel');
+    el.setAttribute('autocomplete', 'tel');
+    el.setAttribute('maxlength', '16');
+
+    function formatDigits(d) {
+        if (!d) return '';
+        if (d.length <= 2) return `(${d}`;
+        if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+        if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+        return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7, 11)}`;
+    }
+
     el.addEventListener('input', function (e) {
-        let v = e.target.value.replace(/\D/g, '').slice(0, 11);
-        if (v.length > 6) v = `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`;
-        else if (v.length > 2) v = `(${v.slice(0, 2)}) ${v.slice(2)}`;
-        else if (v.length > 0) v = `(${v}`;
-        e.target.value = v;
+        const isDeleting = e.inputType && e.inputType.startsWith('delete');
+        const raw = e.target.value;
+        const digits = raw.replace(/\D/g, '').slice(0, 11);
+
+        let finalDigits = digits;
+        if (isDeleting && /[\s\-\)]$/.test(raw) && digits.length > 0) {
+            const wouldBe = formatDigits(digits);
+            if (wouldBe.length > raw.length) {
+                finalDigits = digits.slice(0, -1);
+            }
+        }
+
+        const formatted = formatDigits(finalDigits);
+        if (formatted !== raw) {
+            const cursorAtEnd = e.target.selectionStart === raw.length;
+            e.target.value = formatted;
+            if (cursorAtEnd) {
+                e.target.setSelectionRange(formatted.length, formatted.length);
+            }
+        }
     });
 }
 
@@ -146,12 +180,32 @@ function generateTimeSlotsFromAvailability(availability, dayOfWeek) {
 }
 
 // ========== BOOKING CONFLICT CHECK ==========
-function getUnavailableReason(date, timeStr, service, bookings, allServices) {
+function getUnavailableReason(date, timeStr, service, bookings, allServices, availability) {
     const slotStart = timeToMin(timeStr);
     const slotEnd = slotStart + service.duration + (service.prepTime || 0);
 
-    if (slotEnd > 18 * 60) {
-        return `Servico de ${service.duration}min nao cabe neste horario (ultrapassa o expediente)`;
+    const now = new Date();
+    const todayStr = now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0');
+    if (date === todayStr) {
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+        if (slotStart <= nowMin + 30) {
+            return 'Horário já passou — escolha um horário futuro';
+        }
+    }
+
+    let dayEndMin = 24 * 60 - 1;
+    if (availability) {
+        const dow = new Date(date + 'T12:00:00').getDay();
+        const cfg = availability[String(dow)];
+        if (cfg && cfg.enabled && cfg.endTime) {
+            dayEndMin = timeToMin(cfg.endTime);
+        }
+    }
+
+    if (slotEnd > dayEndMin) {
+        return `Serviço de ${service.duration}min não cabe neste horário (termina após o expediente)`;
     }
 
     for (const b of bookings.filter(b2 => b2.date === date && (b2.status === 'pendente' || b2.status === 'confirmado'))) {
@@ -167,9 +221,9 @@ function getUnavailableReason(date, timeStr, service, bookings, allServices) {
     return null;
 }
 
-function isSlotFullyBlocked(date, timeStr, bookings, allServices) {
+function isSlotFullyBlocked(date, timeStr, bookings, allServices, availability) {
     for (const svc of allServices) {
-        if (!getUnavailableReason(date, timeStr, svc, bookings, allServices)) {
+        if (!getUnavailableReason(date, timeStr, svc, bookings, allServices, availability)) {
             return false;
         }
     }
@@ -264,25 +318,25 @@ async function renderHomeServices() {
         const services = await getServices();
         if (typeof homeServices !== 'undefined') homeServices = services;
         if (services.length === 0) {
-            container.innerHTML = '<p class="text-sm text-muted" style="padding:0 20px;">Nenhum servico disponivel.</p>';
+            container.innerHTML = '<p class="text-sm text-muted" style="padding:0 20px;">Nenhum serviço disponivel.</p>';
             return;
         }
         container.innerHTML = '';
         container.classList.add('stagger-in');
         container.innerHTML = services.slice(0, 6).map(s => `
-            <div class="service-card" style="cursor:pointer;" onclick="openItemDetail('servico','${s.id}')">
+            <div class="service-card" style="cursor:pointer;" onclick="openItemDetail('servico','${esc(s.id)}')">
                 <div style="position:relative;">
-                    <img src="${s.image || 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop'}" alt="${s.name}" class="service-card-img" loading="lazy">
-                    ${isAdmin() ? `<button class="edit-badge" onclick="event.stopPropagation(); openEditModal('${s.id}','servico')" title="Editar"><i class="fas fa-pen"></i></button>` : ''}
+                    <img src="${esc(s.image || 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop')}" alt="${esc(s.name)}" class="service-card-img" loading="lazy">
+                    ${isAdmin() ? `<button class="edit-badge" onclick="event.stopPropagation(); openEditModal('${esc(s.id)}','servico')" title="Editar"><i class="fas fa-pen"></i></button>` : ''}
                 </div>
                 <div class="service-card-body">
-                    <h4 class="service-card-name">${s.name}</h4>
-                    <p class="service-card-meta"><i class="far fa-clock"></i> ${s.duration} min</p>
+                    <h4 class="service-card-name">${esc(s.name)}</h4>
+                    <p class="service-card-meta"><i class="far fa-clock"></i> ${esc(s.duration)} min</p>
                     <p class="service-card-price">R$ ${fmtPrice(s.price)}</p>
                 </div>
             </div>`).join('');
     } catch (err) {
-        container.innerHTML = '<p class="text-sm text-muted" style="padding:0 20px;">Erro ao carregar servicos.</p>';
+        container.innerHTML = '<p class="text-sm text-muted" style="padding:0 20px;">Erro ao carregar serviços.</p>';
         console.error(err);
     }
 }
@@ -301,12 +355,12 @@ async function renderHomeProducts() {
         container.innerHTML = '';
         container.classList.add('stagger-in');
         container.innerHTML = products.slice(0, 6).map(p => `
-            <div class="product-card" style="cursor:pointer;" onclick="openItemDetail('produto','${p.id}')">
+            <div class="product-card" style="cursor:pointer;" onclick="openItemDetail('produto','${esc(p.id)}')">
                 <div style="position:relative;">
-                    <img src="${p.image || 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=300&fit=crop'}" alt="${p.name}" class="product-card-img" loading="lazy">
-                    ${isAdmin() ? `<button class="edit-badge" onclick="event.stopPropagation(); openEditModal('${p.id}','produto')" title="Editar"><i class="fas fa-pen"></i></button>` : ''}
+                    <img src="${esc(p.image || 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=300&fit=crop')}" alt="${esc(p.name)}" class="product-card-img" loading="lazy">
+                    ${isAdmin() ? `<button class="edit-badge" onclick="event.stopPropagation(); openEditModal('${esc(p.id)}','produto')" title="Editar"><i class="fas fa-pen"></i></button>` : ''}
                 </div>
-                <p class="product-card-name">${p.name}</p>
+                <p class="product-card-name">${esc(p.name)}</p>
                 <p class="product-card-price">R$ ${fmtPrice(p.price)}</p>
             </div>`).join('');
     } catch (err) {
@@ -335,7 +389,7 @@ function openItemDetail(type, id) {
         ? 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop'
         : 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=300&fit=crop');
 
-    // Product is "On Order" (sob encomenda) if requisicao OR quantidade with 0 stock
+    // Product is "On Order" (sob encomenda) if requisição OR quantidade with 0 stock
     const onOrder = type === 'produto' && !(item.stockType === 'quantidade' && (item.stockQuantity || 0) > 0);
 
     let metaHtml = '';
@@ -365,8 +419,8 @@ function openItemDetail(type, id) {
     let actionBtn = '';
     let extraNote = '';
     if (type === 'servico') {
-        actionBtn = `<a href="agendar.html" class="btn btn-primary btn-full btn-lg mt-4" style="border-radius:14px;"><i class="fas fa-arrow-right"></i> Ver disponibilidade e agendar</a>`;
-        extraNote = `<p class="text-xs text-muted mt-8" style="text-align:center;"><i class="fas fa-info-circle"></i> Você será levado para a página de agendamento</p>`;
+        actionBtn = `<a href="agendar.html?service=${encodeURIComponent(item.id)}" class="btn btn-primary btn-full btn-lg mt-4" style="border-radius:14px;"><i class="fas fa-arrow-right"></i> Ver disponibilidade e agendar</a>`;
+        extraNote = `<p class="text-xs text-muted mt-8" style="text-align:center;"><i class="fas fa-info-circle"></i> Você será levado direto à página de agendamento deste serviço</p>`;
     } else if (onOrder) {
         actionBtn = `<a href="catalogo.html#produtos" class="btn btn-primary btn-full btn-lg mt-4" style="border-radius:14px;background:linear-gradient(135deg,#f59e0b,#f97316);border:none;"><i class="fas fa-arrow-right"></i> Solicitar sob encomenda</a>`;
         extraNote = `<p class="text-xs text-muted mt-8" style="text-align:center;"><i class="fas fa-info-circle"></i> Produto fora de estoque — a Poar entra em contato quando chegar</p>`;
@@ -377,18 +431,18 @@ function openItemDetail(type, id) {
 
     content.innerHTML = `
         <div style="position:relative;">
-            <img src="${imgSrc}" alt="${item.name}"
+            <img src="${esc(imgSrc)}" alt="${esc(item.name)}"
                 style="width:100%;height:220px;object-fit:cover;display:block;"
                 onerror="this.src='https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=220&fit=crop'">
             <div style="position:absolute;inset:0;background:linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.6));"></div>
         </div>
         <div style="padding:20px 20px 28px;">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;">
-                <h2 style="font-size:1.2rem;font-weight:800;color:var(--text-dark);line-height:1.3;">${item.name}</h2>
+                <h2 style="font-size:1.2rem;font-weight:800;color:var(--text-dark);line-height:1.3;">${esc(item.name)}</h2>
                 <span style="font-size:1.2rem;font-weight:800;color:var(--accent);white-space:nowrap;">R$ ${fmtPrice(item.price)}</span>
             </div>
             ${metaHtml}
-            ${item.description ? `<p style="font-size:0.875rem;color:var(--text-muted);line-height:1.6;margin-bottom:16px;">${item.description}</p>` : ''}
+            ${item.description ? `<p style="font-size:0.875rem;color:var(--text-muted);line-height:1.6;margin-bottom:16px;">${esc(item.description)}</p>` : ''}
             ${actionBtn}
             ${extraNote}
         </div>`;
@@ -499,11 +553,30 @@ async function applyLogoConfig() {
         if (titleEl && config.brandTitle) titleEl.textContent = config.brandTitle;
         if (subtitleEl && config.brandSubtitle) subtitleEl.textContent = config.brandSubtitle;
 
+        // Apply WhatsApp floating button: href + aria-label
+        applyWhatsappContact(config);
+
         // If admin, ensure the edit badge is present on the logo
         if (typeof isAdmin === 'function' && isAdmin() && logoEl) {
             addAdminLogoEditBadge(logoEl);
         }
     } catch(e) { console.error('Logo config error:', e); }
+}
+
+// ========== WHATSAPP CONTACT (siteConfig) ==========
+function applyWhatsappContact(config) {
+    const fab = document.querySelector('.fab-whatsapp');
+    if (!fab) return;
+    const digits = (config.whatsappNumber || '').replace(/\D/g, '');
+    const name = config.whatsappName || 'Poar';
+    if (digits.length >= 10) {
+        fab.href = `https://wa.me/${digits.startsWith('55') ? digits : '55' + digits}`;
+        fab.setAttribute('aria-label', `WhatsApp — ${name}`);
+        fab.title = `Falar com ${name} no WhatsApp`;
+    } else {
+        // No number configured: hide the floating button.
+        fab.style.display = 'none';
+    }
 }
 
 // ========== ADMIN LOGO EDIT (global) ==========
@@ -537,7 +610,7 @@ function ensureLogoEditModalInjected() {
             </div>
             <div style="text-align:center;margin-bottom:16px;">
                 <div id="global-logo-edit-preview" style="width:80px;height:80px;border-radius:16px;background:var(--bg-card,#fff);border:2px solid var(--border-light,#eee);display:inline-flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:1.6rem;font-weight:700;color:var(--accent,#e91e63);overflow:hidden;">P</div>
-                <div><strong id="global-brand-preview-title" style="font-size:1.05rem;color:var(--text-dark);">Poar</strong> <span id="global-brand-preview-subtitle" style="font-size:0.85rem;color:var(--text-muted);">Estetica</span></div>
+                <div><strong id="global-brand-preview-title" style="font-size:1.05rem;color:var(--text-dark);">Poar</strong> <span id="global-brand-preview-subtitle" style="font-size:0.85rem;color:var(--text-muted);">Estética</span></div>
             </div>
             <div style="text-align:left;display:flex;flex-direction:column;gap:14px;">
                 <div class="form-group" style="margin-bottom:0;">
@@ -580,8 +653,9 @@ function ensureLogoEditModalInjected() {
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label">Complemento</label>
-                    <input type="text" class="form-control" id="global-brand-subtitle" placeholder="Estetica" maxlength="40">
+                    <input type="text" class="form-control" id="global-brand-subtitle" placeholder="Estética" maxlength="40">
                 </div>
+
                 <button class="btn btn-primary btn-full btn-lg mt-8" id="btn-save-global-logo" onclick="saveGlobalLogoConfig()">
                     <i class="fas fa-save"></i> Salvar
                 </button>
@@ -599,7 +673,7 @@ function ensureLogoEditModalInjected() {
         document.getElementById('global-brand-preview-title').textContent = e.target.value || 'Poar';
     });
     document.getElementById('global-brand-subtitle').addEventListener('input', e => {
-        document.getElementById('global-brand-preview-subtitle').textContent = e.target.value || 'Estetica';
+        document.getElementById('global-brand-preview-subtitle').textContent = e.target.value || 'Estética';
     });
 }
 
@@ -633,13 +707,13 @@ async function openGlobalLogoEditModal() {
         document.getElementById('global-logo-edit-fontsize').value = config.logoFontSize || 'medium';
         document.getElementById('global-logo-edit-fontstyle').value = config.logoFontStyle || 'normal';
         document.getElementById('global-brand-title').value = config.brandTitle || 'Poar';
-        document.getElementById('global-brand-subtitle').value = config.brandSubtitle || 'Estetica';
+        document.getElementById('global-brand-subtitle').value = config.brandSubtitle || 'Estética';
         const removeBtn = document.getElementById('btn-remove-global-logo-img');
         if (config.logoImage) removeBtn.classList.remove('hidden');
         else removeBtn.classList.add('hidden');
         updateGlobalLogoPreview();
         document.getElementById('global-brand-preview-title').textContent = config.brandTitle || 'Poar';
-        document.getElementById('global-brand-preview-subtitle').textContent = config.brandSubtitle || 'Estetica';
+        document.getElementById('global-brand-preview-subtitle').textContent = config.brandSubtitle || 'Estética';
     } catch(e) { console.error(e); }
     openModal('global-logoedit-overlay', 'global-logoedit-sheet');
 }
@@ -677,7 +751,7 @@ async function saveGlobalLogoConfig() {
             logoFontSize: document.getElementById('global-logo-edit-fontsize').value,
             logoFontStyle: document.getElementById('global-logo-edit-fontstyle').value,
             brandTitle: document.getElementById('global-brand-title').value.trim() || 'Poar',
-            brandSubtitle: document.getElementById('global-brand-subtitle').value.trim() || 'Estetica'
+            brandSubtitle: document.getElementById('global-brand-subtitle').value.trim() || 'Estética'
         };
         await updateSiteConfig(data);
         await applyLogoConfig();
@@ -740,8 +814,8 @@ async function renderClientPromotions(containerEl, clientEmail) {
                     <div class="promo-header">
                         <div class="promo-icon"><i class="fas fa-gift"></i></div>
                         <div class="promo-info">
-                            <h4 class="promo-title">${reqName}</h4>
-                            <p class="promo-desc">${desc}</p>
+                            <h4 class="promo-title">${esc(reqName)}</h4>
+                            <p class="promo-desc">${esc(desc)}</p>
                         </div>
                     </div>
                     <div class="promo-progress">
@@ -750,7 +824,7 @@ async function renderClientPromotions(containerEl, clientEmail) {
                         </div>
                         <div class="promo-stats">
                             <span>${progress} de ${required}</span>
-                            <span>${canRedeem ? '🎉 Resgate disponivel!' : remaining > 0 ? `Falta${remaining > 1 ? 'm' : ''} ${remaining}` : 'Completo!'}</span>
+                            <span>${canRedeem ? '🎉 Resgate disponível!' : remaining > 0 ? `Falta${remaining > 1 ? 'm' : ''} ${remaining}` : 'Completo!'}</span>
                         </div>
                     </div>
                     ${pendingRedemption ? `
@@ -758,8 +832,8 @@ async function renderClientPromotions(containerEl, clientEmail) {
                             <i class="fas fa-hourglass-half"></i> Aguardando Poar agendar seu brinde!
                         </div>` : ''}
                     ${canRedeem ? `
-                        <button class="btn btn-primary btn-full mt-12" onclick="redeemPromotion('${promo.id}')" style="background:linear-gradient(135deg,#f59e0b,#f97316);border:none;">
-                            <i class="fas fa-trophy"></i> Resgatar ${freeCount}x ${rewName}!
+                        <button class="btn btn-primary btn-full mt-12" onclick="redeemPromotion('${esc(promo.id)}')" style="background:linear-gradient(135deg,#f59e0b,#f97316);border:none;">
+                            <i class="fas fa-trophy"></i> Resgatar ${freeCount}x ${esc(rewName)}!
                         </button>` : ''}
                 </div>`;
         }

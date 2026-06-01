@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agendar - Poar Estetica</title>
+    <title>Agendar - Poar Estética</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -12,12 +12,12 @@
         <header class="top-header">
             <a href="index.html" class="header-brand">
                 <div class="header-logo">P</div>
-                <div><h1 class="header-title">Poar</h1><p class="header-subtitle">Estetica</p></div>
+                <div><h1 class="header-title">Poar</h1><p class="header-subtitle">Estética</p></div>
             </a>
             <nav class="desktop-nav">
-                <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Inicio</a>
+                <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Início</a>
                 <a href="agendar.html" class="nav-link active"><i class="far fa-calendar-plus"></i> Agendar</a>
-                <a href="catalogo.html" class="nav-link"><i class="fas fa-th-large"></i> Catalogo</a>
+                <a href="catalogo.html" class="nav-link"><i class="fas fa-th-large"></i> Catálogo</a>
             </nav>
             <div class="header-actions">
                 <a href="login.html" class="header-link" id="header-user-btn"><i class="far fa-user"></i><span id="header-user-name">Entrar</span></a>
@@ -35,16 +35,19 @@
                 </div>
             </div>
 
+            <!-- Banner do serviço pré-selecionado (vindo do catálogo ou home) -->
+            <div class="section hidden" id="preselected-banner" style="padding: 0 20px;"></div>
+
             <!-- Meus agendamentos pendentes -->
             <div class="section hidden" id="my-bookings-section">
                 <div class="section-header"><h3 class="section-title text-sm">Seus Agendamentos</h3></div>
                 <div id="my-bookings-list" style="padding: 0 20px;"></div>
             </div>
 
-            <!-- Calendario -->
+            <!-- Calendário -->
             <div class="calendar-header">
                 <div class="calendar-nav">
-                    <button onclick="changeMonth(-1)" aria-label="Mes anterior"><i class="fas fa-chevron-left"></i></button>
+                    <button onclick="changeMonth(-1)" aria-label="Mês anterior"><i class="fas fa-chevron-left"></i></button>
                 </div>
                 <h2 id="calendar-month-label"></h2>
                 <div class="calendar-nav">
@@ -60,7 +63,7 @@
             <div style="height: 24px;"></div>
         </main>
 
-        <!-- MODAL: Horarios do dia -->
+        <!-- MODAL: Horários do dia -->
         <div class="modal-overlay" id="day-overlay" onclick="closeDayModal()"></div>
         <div class="bottom-sheet" id="day-sheet">
             <div class="bottom-sheet-handle"></div>
@@ -68,11 +71,11 @@
                 <h3 class="bottom-sheet-title" id="day-sheet-title" style="margin-bottom:0;"></h3>
                 <button class="btn btn-ghost btn-sm" onclick="closeDayModal()" style="color:var(--text-muted);"><i class="fas fa-times"></i></button>
             </div>
-            <p class="text-sm text-muted mb-16">Escolha um horario disponivel:</p>
+            <p class="text-sm text-muted mb-16">Escolha um horário disponivel:</p>
             <div class="time-grid" id="day-time-grid"></div>
         </div>
 
-        <!-- MODAL: Servicos para o horario -->
+        <!-- MODAL: Serviços para o horário -->
         <div class="modal-overlay" id="svc-overlay" onclick="closeSvcModal()"></div>
         <div class="bottom-sheet" id="svc-sheet">
             <div class="bottom-sheet-handle"></div>
@@ -89,6 +92,28 @@
         <div class="bottom-sheet" id="confirm-sheet">
             <div class="bottom-sheet-handle"></div>
             <div id="confirm-content"></div>
+        </div>
+
+        <!-- MODAL: Dia Bloqueado (Recesso) -->
+        <div class="modal-overlay" id="blocked-overlay" onclick="closeBlockedModal()"></div>
+        <div class="bottom-sheet" id="blocked-sheet">
+            <div class="bottom-sheet-handle"></div>
+            <button class="btn btn-ghost btn-sm" onclick="closeBlockedModal()" style="position:absolute;top:16px;right:16px;color:var(--text-muted);z-index:2;"><i class="fas fa-times"></i></button>
+            <div class="blocked-body">
+                <div class="blocked-icon-wrap">
+                    <div class="blocked-icon"><i class="fas fa-umbrella-beach"></i></div>
+                </div>
+                <h3 class="blocked-title">Dia indisponível</h3>
+                <p class="blocked-sub" id="blocked-date-label"></p>
+                <div class="blocked-reason-box" id="blocked-reason-box">
+                    <i class="fas fa-info-circle"></i>
+                    <span id="blocked-reason-text"></span>
+                </div>
+                <p class="text-xs text-muted" style="text-align:center;margin-top:16px;">Selecione outro dia disponível no calendário para agendar.</p>
+                <button class="btn btn-outline btn-full mt-12" onclick="closeBlockedModal()" style="border-radius:12px;">
+                    <i class="fas fa-arrow-left"></i> Voltar ao calendário
+                </button>
+            </div>
         </div>
 
         <!-- MODAL: Sem Agenda -->
@@ -113,9 +138,9 @@
         </div>
 
         <nav class="bottom-nav">
-            <a href="index.html" class="nav-btn"><i class="fas fa-home"></i><span>Inicio</span></a>
+            <a href="index.html" class="nav-btn"><i class="fas fa-home"></i><span>Início</span></a>
             <a href="agendar.html" class="nav-btn active"><i class="far fa-calendar-plus"></i><span>Agendar</span></a>
-            <a href="catalogo.html" class="nav-btn"><i class="fas fa-th-large"></i><span>Catalogo</span></a>
+            <a href="catalogo.html" class="nav-btn"><i class="fas fa-th-large"></i><span>Catálogo</span></a>
             <a href="login.html" class="nav-btn"><i class="far fa-user"></i><span>Entrar</span></a>
         </nav>
     </div>
@@ -135,8 +160,11 @@
         let cachedBlockedDates = [];
         let cachedServices = [];
         let cachedBookings = [];
+        // If the user arrived from a service detail page (?service=ID),
+        // pre-select that service and skip the service-picker modal entirely.
+        let preselectedServiceId = null;
 
-        const MONTHS = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+        const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
         document.addEventListener('DOMContentLoaded', async () => {
             const now = new Date();
@@ -151,6 +179,11 @@
             updateNavState();
             applyLogoConfig();
 
+            // Detect ?service=ID — when present, the user already chose a service
+            // (came from the service detail modal). Skip the picker later.
+            const urlParams = new URLSearchParams(window.location.search);
+            preselectedServiceId = urlParams.get('service');
+
             // Load data in parallel
             try {
                 const [avail, blocked, services] = await Promise.all([
@@ -163,9 +196,36 @@
                 cachedServices = services;
             } catch(e) { console.error(e); }
 
+            // If a service was preselected, lock it in immediately and show a hint banner
+            if (preselectedServiceId) {
+                const svc = cachedServices.find(s => s.id === preselectedServiceId);
+                if (svc) {
+                    selectedService = svc;
+                    showPreselectedBanner(svc);
+                }
+            }
+
             renderCalendar();
             loadMyBookings();
         });
+
+        function showPreselectedBanner(svc) {
+            const banner = document.getElementById('preselected-banner');
+            if (!banner) return;
+            banner.innerHTML = `
+                <div class="preselect-card">
+                    <div class="preselect-icon"><i class="fas fa-spa"></i></div>
+                    <div style="flex:1;min-width:0;">
+                        <p class="text-xs text-muted">Você está agendando:</p>
+                        <p class="text-sm fw-700" style="color:var(--text-dark);">${svc.name}</p>
+                        <p class="text-xs text-muted"><i class="far fa-clock"></i> ${svc.duration} min &middot; R$ ${fmtPrice(svc.price)}</p>
+                    </div>
+                    <a href="agendar.html" class="btn btn-ghost btn-sm" title="Trocar de serviço" style="color:var(--text-muted);">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </div>`;
+            banner.classList.remove('hidden');
+        }
 
         async function loadMyBookings() {
             const user = getProfile();
@@ -188,7 +248,7 @@
                     const list = document.getElementById('my-bookings-list');
                     list.innerHTML = relevant.map(b => {
                         const statusClass = 'status-' + b.status;
-                        const statusLabel = b.status === 'pendente' ? 'Pendente aprovacao'
+                        const statusLabel = b.status === 'pendente' ? 'Pendente aprovação'
                             : b.status === 'confirmado' ? 'Confirmado'
                             : b.status === 'cancelado' ? 'Recusado' : b.status;
                         const cancelInfo = b.status === 'cancelado' && b.cancelReason
@@ -229,6 +289,10 @@
             const todayStr = today.toISOString().split('T')[0];
             const blockedSet = new Set(cachedBlockedDates.map(b => b.date || b.id));
 
+            // Build a map { date -> reason } for quick lookup
+            const blockedMap = {};
+            cachedBlockedDates.forEach(b => { blockedMap[b.date || b.id] = b.reason || ''; });
+
             let html = '';
             for (let i = firstDay - 1; i >= 0; i--) {
                 html += `<div class="calendar-day other-month">${prevMonthDays - i}</div>`;
@@ -241,6 +305,7 @@
                 const isPast = dateStr < todayStr;
                 const isToday = dateStr === todayStr;
                 const isBlocked = blockedSet.has(dateStr);
+                const blockReason = blockedMap[dateStr] || '';
                 const dayConfig = cachedAvailability[String(dow)];
                 const dayEnabled = dayConfig && dayConfig.enabled;
 
@@ -250,11 +315,22 @@
 
                 const clickable = !isPast && dayEnabled && !isBlocked;
                 const noAgendaClickable = !isPast && !dayEnabled && !isBlocked;
+                const blockedClickable = !isPast && isBlocked;
+
                 if (noAgendaClickable) classes += ' no-agenda';
+                if (isBlocked && !isPast) classes += ' blocked-day';
+
                 let onclick = '';
-                if (clickable) onclick = `onclick="openDay('${dateStr}', ${dow})"`;
-                else if (noAgendaClickable) onclick = `onclick="openNoAgendaModal('${dateStr}')"`;
-                html += `<div class="${classes}" ${onclick}>${d}</div>`;
+                let extra = '';
+                if (clickable) {
+                    onclick = `onclick="openDay('${dateStr}', ${dow})"`;
+                } else if (blockedClickable) {
+                    onclick = `onclick="openBlockedModal('${dateStr}', '${blockReason.replace(/'/g, "\\'")}')"`;
+                    extra = `<span class="block-pin"><i class="fas fa-umbrella-beach"></i></span>`;
+                } else if (noAgendaClickable) {
+                    onclick = `onclick="openNoAgendaModal('${dateStr}')"`;
+                }
+                html += `<div class="${classes}" ${onclick} title="${blockReason ? 'Bloqueado: ' + blockReason.replace(/"/g, '&quot;') : ''}">${d}${extra}</div>`;
             }
 
             const totalCells = firstDay + daysInMonth;
@@ -290,10 +366,18 @@
             const grid = document.getElementById('day-time-grid');
 
             if (slots.length === 0) {
-                grid.innerHTML = '<p class="text-sm text-muted text-center" style="grid-column:1/-1; padding:20px;">Sem horarios disponiveis neste dia.</p>';
+                grid.innerHTML = '<p class="text-sm text-muted text-center" style="grid-column:1/-1; padding:20px;">Sem horários disponiveis neste dia.</p>';
             } else {
                 grid.innerHTML = slots.map(slot => {
-                    const blocked = isSlotFullyBlocked(dateStr, slot, cachedBookings, cachedServices);
+                    let blocked;
+                    if (selectedService && preselectedServiceId) {
+                        // Only this specific service matters — check just it
+                        blocked = !!getUnavailableReason(
+                            dateStr, slot, selectedService, cachedBookings, cachedServices, cachedAvailability
+                        );
+                    } else {
+                        blocked = isSlotFullyBlocked(dateStr, slot, cachedBookings, cachedServices, cachedAvailability);
+                    }
                     return `<button class="time-slot ${blocked ? 'disabled' : ''}" ${!blocked ? `onclick="openTimeServices('${slot}')"` : ''}>${slot}</button>`;
                 }).join('');
             }
@@ -302,6 +386,27 @@
         }
 
         function closeDayModal() { closeModal('day-overlay', 'day-sheet'); }
+
+        // ===== BLOCKED DAY MODAL (recesso/feriado) =====
+        function openBlockedModal(dateStr, reason) {
+            const date = new Date(dateStr + 'T12:00:00');
+            const label = date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+            document.getElementById('blocked-date-label').textContent =
+                label.charAt(0).toUpperCase() + label.slice(1);
+
+            const reasonBox = document.getElementById('blocked-reason-box');
+            const reasonText = document.getElementById('blocked-reason-text');
+            if (reason && reason.trim()) {
+                reasonBox.style.display = 'flex';
+                reasonText.textContent = reason;
+            } else {
+                reasonBox.style.display = 'flex';
+                reasonText.textContent = 'Este dia foi marcado como indisponível pela administradora.';
+            }
+            openModal('blocked-overlay', 'blocked-sheet');
+        }
+
+        function closeBlockedModal() { closeModal('blocked-overlay', 'blocked-sheet'); }
 
         // ===== SEM AGENDA MODAL =====
         let noAgendaDate = null;
@@ -370,13 +475,26 @@
             selectedTime = time;
             closeDayModal();
 
+            if (selectedService && preselectedServiceId) {
+                const reason = getUnavailableReason(
+                    selectedDate, time, selectedService, cachedBookings, cachedServices, cachedAvailability
+                );
+                if (reason) {
+                    showToast(reason, 'error');
+                    return;
+                }
+                // Reuse selectServiceForBooking with the locked-in service ID
+                setTimeout(() => selectServiceForBooking(selectedService.id), 200);
+                return;
+            }
+
             const dayLabel = formatDateShort(selectedDate);
-            document.getElementById('svc-sheet-title').textContent = `Servicos as ${time}`;
-            document.getElementById('svc-sheet-subtitle').textContent = `${dayLabel} — Selecione o servico desejado`;
+            document.getElementById('svc-sheet-title').textContent = `Serviços às ${time}`;
+            document.getElementById('svc-sheet-subtitle').textContent = `${dayLabel} — Selecione o serviço desejado`;
 
             const container = document.getElementById('svc-options-list');
             container.innerHTML = cachedServices.map(svc => {
-                const reason = getUnavailableReason(selectedDate, time, svc, cachedBookings, cachedServices);
+                const reason = getUnavailableReason(selectedDate, time, svc, cachedBookings, cachedServices, cachedAvailability);
                 const available = !reason;
                 return `
                     <div class="service-option ${available ? '' : 'unavailable'}" ${available ? `onclick="selectServiceForBooking('${svc.id}')"` : ''}>
@@ -411,8 +529,8 @@
             document.getElementById('confirm-content').innerHTML = `
                 <div class="text-center">
                     <i class="far fa-user-circle" style="font-size:3rem; color:var(--brand-400); margin-bottom:12px;"></i>
-                    <h3 style="font-size:1.1rem; font-weight:700; color:var(--text-dark); margin-bottom:6px;">Faca login para agendar</h3>
-                    <p class="text-sm text-muted mb-24">Voce precisa estar logada para confirmar um agendamento.</p>
+                    <h3 style="font-size:1.1rem; font-weight:700; color:var(--text-dark); margin-bottom:6px;">Faça login para agendar</h3>
+                    <p class="text-sm text-muted mb-24">Você precisa estar logada para confirmar um agendamento.</p>
                     <div class="card mb-16" style="text-align:left; background:var(--bg-app);">
                         <p class="text-xs text-muted mb-4">Resumo do agendamento:</p>
                         <p class="text-sm fw-600">${selectedService.name}</p>
@@ -446,7 +564,7 @@
                         </div>
                         <div style="border-top:1px solid var(--border-light); padding-top:12px;">
                             <div class="flex justify-between mb-8"><span class="text-sm text-muted">Data</span><span class="text-sm fw-600">${dateLabel}</span></div>
-                            <div class="flex justify-between mb-8"><span class="text-sm text-muted">Horario</span><span class="text-sm fw-600">${selectedTime}</span></div>
+                            <div class="flex justify-between mb-8"><span class="text-sm text-muted">Horário</span><span class="text-sm fw-600">${selectedTime}</span></div>
                             <div class="flex justify-between"><span class="text-sm text-muted">Valor</span><span class="text-sm fw-700" style="color:var(--accent);">R$ ${fmtPrice(selectedService.price)}</span></div>
                         </div>
                     </div>
@@ -466,11 +584,11 @@
                         ` : `
                         <input type="tel" class="form-control" id="confirm-phone" placeholder="(00) 00000-0000">
                         `}
-                        <p class="form-hint">A confirmacao sera enviada para este numero.</p>
+                        <p class="form-hint">A confirmação será enviada para este número.</p>
                     </div>
 
                     <div class="card mb-16" style="background:var(--warning-bg); text-align:left;">
-                        <p class="text-xs" style="color:var(--warning);"><i class="fas fa-info-circle"></i> Apos confirmar, seu agendamento ficara <strong>pendente de aprovacao</strong>. Voce recebera uma confirmacao por WhatsApp assim que for aprovado.</p>
+                        <p class="text-xs" style="color:var(--warning);"><i class="fas fa-info-circle"></i> Apos confirmar, seu agendamento ficara <strong>pendente de aprovação</strong>. Você recebera uma confirmação por WhatsApp assim que for aprovado.</p>
                     </div>
 
                     <button class="btn btn-primary btn-full btn-lg" onclick="finalizeBooking()"><i class="fas fa-check"></i> Confirmar Agendamento</button>
@@ -521,19 +639,19 @@
                     <div class="text-center">
                         <i class="fas fa-clock" style="font-size:3.5rem; color:var(--warning); margin-bottom:16px;"></i>
                         <h3 style="font-size:1.15rem; font-weight:700; color:var(--text-dark); margin-bottom:6px;">Pedido Marcado!</h3>
-                        <p class="text-sm text-muted mb-8">Pendente confirmacao da administradora.</p>
-                        <span class="status-badge status-pendente mb-24" style="display:inline-flex;"><i class="fas fa-hourglass-half"></i> Pendente aprovacao</span>
+                        <p class="text-sm text-muted mb-8">Pendente confirmação da administradora.</p>
+                        <span class="status-badge status-pendente mb-24" style="display:inline-flex;"><i class="fas fa-hourglass-half"></i> Pendente aprovação</span>
                         <div class="card mb-24" style="text-align:left;">
-                            <p class="text-sm"><strong>Servico:</strong> ${selectedService.name}</p>
+                            <p class="text-sm"><strong>Serviço:</strong> ${selectedService.name}</p>
                             <p class="text-sm mt-8"><strong>Data:</strong> ${formatDateBR(selectedDate)}</p>
-                            <p class="text-sm mt-8"><strong>Horario:</strong> ${selectedTime}</p>
+                            <p class="text-sm mt-8"><strong>Horário:</strong> ${selectedTime}</p>
                             <p class="text-sm mt-8"><strong>Valor:</strong> R$ ${fmtPrice(selectedService.price)}</p>
                         </div>
-                        <p class="text-xs text-muted mb-16"><i class="fab fa-whatsapp" style="color:#25d366;"></i> Voce recebera uma mensagem no WhatsApp quando for aprovado.</p>
+                        <p class="text-xs text-muted mb-16"><i class="fab fa-whatsapp" style="color:#25d366;"></i> Você recebera uma mensagem no WhatsApp quando for aprovado.</p>
                         <button class="btn btn-primary btn-full" onclick="closeConfirmModal(); renderCalendar(); loadMyBookings();">Fechar</button>
                     </div>`;
                 setTimeout(() => openModal('confirm-overlay', 'confirm-sheet'), 100);
-                showToast('Agendamento enviado para aprovacao!', 'success');
+                showToast('Agendamento enviado para aprovação!', 'success');
             } catch (err) {
                 showToast('Erro ao agendar: ' + err.message, 'error');
                 console.error(err);

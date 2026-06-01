@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestao - Poar Estetica</title>
+    <title>Gestão - Poar Estética</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -12,16 +12,19 @@
         <header class="top-header">
             <a href="index.html" class="header-brand">
                 <div class="header-logo">P</div>
-                <div><h1 class="header-title">Poar</h1><p class="header-subtitle">Estetica</p></div>
+                <div><h1 class="header-title">Poar</h1><p class="header-subtitle">Estética</p></div>
             </a>
             <nav class="desktop-nav">
-                <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Inicio</a>
+                <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Início</a>
                 <a href="agendar.html" class="nav-link"><i class="far fa-calendar-plus"></i> Agendar</a>
-                <a href="catalogo.html" class="nav-link"><i class="fas fa-th-large"></i> Catalogo</a>
-                <a href="gestao.html" class="nav-link active"><i class="fas fa-cog"></i> Gestao</a>
+                <a href="catalogo.html" class="nav-link"><i class="fas fa-th-large"></i> Catálogo</a>
+                <a href="gestao.html" class="nav-link active"><i class="fas fa-cog"></i> Gestão</a>
             </nav>
             <div class="header-actions">
                 <span class="text-sm fw-600" id="gestao-user-name" style="color:var(--text-muted);"></span>
+                <button class="header-icon-btn" onclick="openAdminSettingsModal()" title="Configurações" aria-label="Configurações da clínica">
+                    <i class="fas fa-cog"></i>
+                </button>
                 <button class="header-link" onclick="handleLogout()" style="color:var(--danger);border-color:var(--danger-bg);">
                     <i class="fas fa-sign-out-alt"></i><span>Sair</span>
                 </button>
@@ -31,11 +34,11 @@
         <!-- Tabs -->
         <div class="tabs" id="main-tabs">
             <button class="tab-btn active" onclick="switchTab('dashboard',this)"><i class="fas fa-chart-pie"></i> Resumo</button>
-            <button class="tab-btn" onclick="switchTab('aprovacoes',this)"><i class="fas fa-bell"></i> Aprovacoes <span class="status-badge status-pendente hidden" id="pending-count-badge" style="margin-left:4px;"></span></button>
-            <button class="tab-btn" onclick="switchTab('servicos',this)"><i class="fas fa-spa"></i> Servicos</button>
+            <button class="tab-btn" onclick="switchTab('aprovacoes',this)"><i class="fas fa-bell"></i> Aprovações <span class="status-badge status-pendente hidden" id="pending-count-badge" style="margin-left:4px;"></span></button>
+            <button class="tab-btn" onclick="switchTab('servicos',this)"><i class="fas fa-spa"></i> Serviços</button>
             <button class="tab-btn" onclick="switchTab('produtos',this)"><i class="fas fa-pump-soap"></i> Produtos</button>
-            <button class="tab-btn" onclick="switchTab('disponibilidade',this)"><i class="fas fa-clock"></i> Horarios</button>
-            <button class="tab-btn" onclick="switchTab('promocoes',this)"><i class="fas fa-gift"></i> Promocoes</button>
+            <button class="tab-btn" onclick="switchTab('disponibilidade',this)"><i class="fas fa-clock"></i> Horários</button>
+            <button class="tab-btn" onclick="switchTab('promocoes',this)"><i class="fas fa-gift"></i> Promoções</button>
             <button class="tab-btn" onclick="switchTab('agenda',this)"><i class="fas fa-calendar-alt"></i> Agenda</button>
         </div>
 
@@ -57,7 +60,7 @@
                     <div class="stat-card">
                         <div class="stat-card-icon" style="color:var(--brand-500);"><i class="fas fa-spa"></i></div>
                         <div class="stat-card-value" id="stat-services">0</div>
-                        <div class="stat-card-label">Servicos</div>
+                        <div class="stat-card-label">Serviços</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-card-icon" style="color:var(--accent);"><i class="fas fa-pump-soap"></i></div>
@@ -70,7 +73,7 @@
                         <div class="stat-card-label">Pedidos Pendentes</div>
                     </div>
                 </div>
-                <div class="section"><div class="section-header"><h3 class="section-title">Proximos Agendamentos</h3></div></div>
+                <div class="section"><div class="section-header"><h3 class="section-title">Próximos Agendamentos</h3></div></div>
                 <div class="page-padding" style="padding-top:0;" id="dashboard-bookings"></div>
             </div>
 
@@ -93,16 +96,16 @@
                 <div class="page-padding">
                     <div class="card mb-16">
                         <h3 style="font-size:0.95rem;font-weight:700;color:var(--text-dark);margin-bottom:14px;">
-                            <i class="fas fa-plus-circle" style="color:var(--accent);"></i> Novo Servico
+                            <i class="fas fa-plus-circle" style="color:var(--accent);"></i> Novo Serviço
                         </h3>
                         <form id="form-service" onsubmit="saveService(event)">
                             <div class="form-group">
-                                <label class="form-label">Nome do servico</label>
+                                <label class="form-label">Nome do serviço</label>
                                 <input type="text" class="form-control" id="svc-name" placeholder="Ex: Limpeza de Pele" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Descricao</label>
-                                <input type="text" class="form-control" id="svc-desc" placeholder="Breve descricao">
+                                <label class="form-label">Descrição</label>
+                                <input type="text" class="form-control" id="svc-desc" placeholder="Breve descrição">
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
@@ -119,25 +122,25 @@
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label">Duracao (min)</label>
+                                    <label class="form-label">Duração (min)</label>
                                     <div style="background:var(--bg-app);padding:10px;border-radius:var(--r-sm);">
                                         <p class="text-xs text-muted mb-8"><i class="far fa-clock"></i> Visivel para o cliente</p>
                                         <input type="number" min="10" step="5" class="form-control" id="svc-duration" placeholder="60" required>
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Preparacao (min)</label>
+                                    <label class="form-label">Preparação (min)</label>
                                     <div style="background:var(--warning-bg);padding:10px;border-radius:var(--r-sm);">
                                         <p class="text-xs" style="color:var(--warning);"><i class="fas fa-eye-slash"></i> Oculto do cliente</p>
                                         <input type="number" min="0" step="5" class="form-control mt-8" id="svc-prep" placeholder="15" value="0">
                                     </div>
                                 </div>
                             </div>
-                            <p class="form-hint mb-16"><i class="fas fa-info-circle"></i> O tempo de preparacao bloqueia a agenda entre atendimentos, mas o cliente nao ve.</p>
-                            <button type="submit" class="btn btn-primary btn-full"><i class="fas fa-save"></i> Salvar Servico</button>
+                            <p class="form-hint mb-16"><i class="fas fa-info-circle"></i> O tempo de preparação bloqueia a agenda entre atendimentos, mas o cliente não ve.</p>
+                            <button type="submit" class="btn btn-primary btn-full"><i class="fas fa-save"></i> Salvar Serviço</button>
                         </form>
                     </div>
-                    <h3 class="section-title mb-12">Servicos Cadastrados</h3>
+                    <h3 class="section-title mb-12">Serviços Cadastrados</h3>
                     <div id="services-list"></div>
                 </div>
             </div>
@@ -164,8 +167,8 @@
                                 <input type="text" class="form-control" id="prod-name" placeholder="Ex: Protetor Solar FPS50" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Descricao</label>
-                                <input type="text" class="form-control" id="prod-desc" placeholder="Breve descricao">
+                                <label class="form-label">Descrição</label>
+                                <input type="text" class="form-control" id="prod-desc" placeholder="Breve descrição">
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
@@ -189,7 +192,7 @@
                                         <i class="fas fa-boxes-stacked"></i> Quantidade
                                     </button>
                                     <button type="button" class="period-btn" id="stock-type-requisicao" onclick="setStockType('requisicao')">
-                                        <i class="fas fa-truck"></i> Sob Requisicao
+                                        <i class="fas fa-truck"></i> Sob Requisição
                                     </button>
                                 </div>
                             </div>
@@ -208,7 +211,7 @@
                                 </div>
                             </div>
 
-                            <!-- Requisicao fields -->
+                            <!-- Requisição fields -->
                             <div id="stock-requisicao-fields" class="hidden">
                                 <div class="form-group">
                                     <label class="form-label">Prazo de entrega</label>
@@ -224,37 +227,54 @@
                 </div>
             </div>
 
-            <!-- ===== DISPONIBILIDADE (Horarios) ===== -->
+            <!-- ===== DISPONIBILIDADE (Horários) ===== -->
             <div class="tab-content" id="tab-disponibilidade">
                 <div class="page-padding">
                     <div class="card mb-16">
                         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
                             <h3 style="font-size:0.95rem;font-weight:700;color:var(--text-dark);">
-                                <i class="fas fa-calendar-week" style="color:var(--accent);"></i> Horarios de Atendimento
+                                <i class="fas fa-calendar-week" style="color:var(--accent);"></i> Horários de Atendimento
                             </h3>
                         </div>
-                        <p class="text-xs text-muted mb-16">Ative os dias que voce atende e configure os horarios. Clientes so poderao agendar nos dias e horarios configurados.</p>
+                        <p class="text-xs text-muted mb-16">Ative os dias que você atende e configure os horários. Clientes so poderao agendar nos dias e horários configurados.</p>
                         <div id="availability-grid"><div style="text-align:center;padding:20px;"><div class="spinner" style="margin:0 auto;"></div></div></div>
                         <button class="btn btn-primary btn-full mt-16" onclick="saveAvailability()" style="border-radius:12px;">
-                            <i class="fas fa-check-circle"></i> Salvar configuracoes
+                            <i class="fas fa-check-circle"></i> Salvar configurações
                         </button>
                     </div>
 
                     <div class="card">
                         <h3 style="font-size:0.95rem;font-weight:700;color:var(--text-dark);margin-bottom:6px;">
-                            <i class="fas fa-ban" style="color:var(--danger);"></i> Bloquear Datas
+                            <i class="fas fa-umbrella-beach" style="color:var(--danger);"></i> Bloquear Datas / Recesso
                         </h3>
-                        <p class="text-xs text-muted mb-16">Bloqueie datas especificas (feriados, folgas, etc).</p>
-                        <div class="form-row mb-12">
-                            <div class="form-group" style="margin-bottom:0;">
-                                <input type="date" class="form-control" id="block-date">
+                        <p class="text-xs text-muted mb-16">Bloqueie um único dia, um final de semana, semanas ou meses inteiros (recesso de férias, feriados, folgas, etc).</p>
+
+                        <div class="block-form-grid">
+                            <div class="block-form-row">
+                                <div class="block-form-field">
+                                    <label class="form-label" style="font-size:0.7rem;">De</label>
+                                    <input type="date" class="form-control" id="block-date-start">
+                                </div>
+                                <div class="block-form-field">
+                                    <label class="form-label" style="font-size:0.7rem;">Até <span class="text-xs text-muted" style="font-weight:400;">(opcional)</span></label>
+                                    <input type="date" class="form-control" id="block-date-end">
+                                </div>
                             </div>
-                            <div class="form-group" style="margin-bottom:0;">
-                                <input type="text" class="form-control" id="block-reason" placeholder="Motivo (opcional)">
+                            <div class="block-form-field">
+                                <label class="form-label" style="font-size:0.7rem;">Motivo</label>
+                                <input type="text" class="form-control" id="block-reason" placeholder="Ex: Recesso de férias">
                             </div>
-                            <button class="btn btn-outline btn-sm" onclick="blockDate()" style="flex-shrink:0;"><i class="fas fa-plus"></i></button>
+                            <div class="block-quick-buttons">
+                                <button type="button" class="chip" onclick="quickBlockPreset('weekend')" title="Próximo fim de semana"><i class="fas fa-calendar-week"></i> Fim de semana</button>
+                                <button type="button" class="chip" onclick="quickBlockPreset('week')" title="Próxima semana"><i class="far fa-calendar"></i> 1 semana</button>
+                                <button type="button" class="chip" onclick="quickBlockPreset('month')" title="Próximos 30 dias"><i class="fas fa-calendar-alt"></i> 30 dias</button>
+                            </div>
+                            <button class="btn btn-primary btn-full" onclick="blockDateRange()" style="border-radius:12px;">
+                                <i class="fas fa-ban"></i> Bloquear período
+                            </button>
                         </div>
-                        <div id="blocked-dates-list"></div>
+
+                        <div class="mt-16" id="blocked-dates-list"></div>
                     </div>
                 </div>
             </div>
@@ -264,9 +284,9 @@
                 <div class="page-padding">
                     <div class="card mb-16">
                         <h3 style="font-size:0.95rem;font-weight:700;color:var(--text-dark);margin-bottom:6px;">
-                            <i class="fas fa-gift" style="color:var(--warning);"></i> Nova Promocao
+                            <i class="fas fa-gift" style="color:var(--warning);"></i> Nova Promoção
                         </h3>
-                        <p class="text-xs text-muted mb-16">Crie promocoes de fidelidade. Ex: "Faca 5 limpezas de pele e ganhe 1 massagem gratis!"</p>
+                        <p class="text-xs text-muted mb-16">Crie promoções de fidelidade. Ex: "Faça 5 limpezas de pele e ganhe 1 massagem gratis!"</p>
                         <form id="form-promo" onsubmit="savePromotion(event)">
                             <!-- Required: what the client must do -->
                             <div style="background:var(--bg-app);padding:14px;border-radius:var(--r-md);margin-bottom:14px;">
@@ -275,12 +295,12 @@
                                     <label class="form-label">Tipo</label>
                                     <select class="form-control" id="promo-required-type" onchange="onPromoRequiredTypeChange()" required>
                                         <option value="">Selecione...</option>
-                                        <option value="servico">Agendar Servico</option>
+                                        <option value="servico">Agendar Serviço</option>
                                         <option value="produto">Comprar Produto</option>
                                     </select>
                                 </div>
                                 <div class="form-group" style="margin-bottom:8px;">
-                                    <label class="form-label">Qual servico/produto</label>
+                                    <label class="form-label">Qual serviço/produto</label>
                                     <select class="form-control" id="promo-required-target" onchange="autoGeneratePromoDesc()" required>
                                         <option value="">Selecione o tipo primeiro...</option>
                                     </select>
@@ -298,12 +318,12 @@
                                     <label class="form-label">Tipo de recompensa</label>
                                     <select class="form-control" id="promo-reward-type" onchange="onPromoRewardTypeChange()" required>
                                         <option value="">Selecione...</option>
-                                        <option value="servico">Servico Gratis</option>
+                                        <option value="servico">Serviço Gratis</option>
                                         <option value="produto">Produto Gratis</option>
                                     </select>
                                 </div>
                                 <div class="form-group" style="margin-bottom:0;">
-                                    <label class="form-label">Qual servico/produto</label>
+                                    <label class="form-label">Qual serviço/produto</label>
                                     <select class="form-control" id="promo-reward-target" onchange="autoGeneratePromoDesc()" required>
                                         <option value="">Selecione o tipo primeiro...</option>
                                     </select>
@@ -311,14 +331,14 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Descricao da promocao</label>
+                                <label class="form-label">Descrição da promoção</label>
                                 <input type="text" class="form-control" id="promo-desc" placeholder="Gerado automaticamente...">
-                                <p class="form-hint">Editavel. Sera exibida para o cliente.</p>
+                                <p class="form-hint">Editavel. Será exibida para o cliente.</p>
                             </div>
-                            <button type="submit" class="btn btn-primary btn-full"><i class="fas fa-save"></i> Criar Promocao</button>
+                            <button type="submit" class="btn btn-primary btn-full"><i class="fas fa-save"></i> Criar Promoção</button>
                         </form>
                     </div>
-                    <h3 class="section-title mb-12">Promocoes Cadastradas</h3>
+                    <h3 class="section-title mb-12">Promoções Cadastradas</h3>
                     <div id="promotions-list"></div>
                 </div>
             </div>
@@ -338,13 +358,49 @@
             </div>
         </main>
 
+        <!-- Configurações da clínica (compacto) -->
+        <div class="modal-overlay" id="admin-settings-overlay" onclick="closeAdminSettingsModal()"></div>
+        <div class="bottom-sheet" id="admin-settings-sheet">
+            <div class="bottom-sheet-handle"></div>
+            <div class="flex items-center justify-between mb-16">
+                <h3 class="bottom-sheet-title" style="margin-bottom:0;">
+                    <i class="fas fa-cog" style="color:var(--accent);"></i> Configurações
+                </h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeAdminSettingsModal()" style="color:var(--text-muted);"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-head">
+                    <div class="settings-section-icon" style="background:linear-gradient(135deg,#25d366,#128c4e);">
+                        <i class="fab fa-whatsapp"></i>
+                    </div>
+                    <div>
+                        <p class="settings-section-title">Contato WhatsApp</p>
+                        <p class="settings-section-sub">Número usado no botão verde flutuante do site</p>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom:10px;">
+                    <label class="form-label">Nome exibido</label>
+                    <input type="text" class="form-control" id="admin-whatsapp-name" placeholder="Poliane" maxlength="40">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">Número (com DDD)</label>
+                    <input type="tel" class="form-control" id="admin-whatsapp-number" placeholder="(00) 00000-0000" inputmode="tel" autocomplete="tel">
+                </div>
+            </div>
+
+            <button class="btn btn-primary btn-full btn-lg mt-16" id="btn-save-admin-whatsapp" onclick="saveAdminWhatsapp()" style="border-radius:12px;">
+                <i class="fas fa-save"></i> Salvar
+            </button>
+        </div>
+
         <!-- Delete confirmation modal -->
         <div class="modal-overlay" id="delete-overlay" onclick="closeDeleteModal()"></div>
         <div class="bottom-sheet" id="delete-sheet">
             <div class="bottom-sheet-handle"></div>
             <div class="text-center">
                 <i class="fas fa-exclamation-triangle" style="font-size:2rem;color:var(--danger);margin-bottom:12px;"></i>
-                <h3 class="bottom-sheet-title">Confirmar exclusao?</h3>
+                <h3 class="bottom-sheet-title">Confirmar exclusão?</h3>
                 <p class="text-sm text-muted mb-16" id="delete-message"></p>
                 <div class="flex gap-8">
                     <button class="btn btn-outline" style="flex:1;" onclick="closeDeleteModal()">Cancelar</button>
@@ -359,7 +415,7 @@
             <div class="bottom-sheet-handle"></div>
             <div>
                 <h3 class="bottom-sheet-title" style="margin-bottom:6px;"><i class="fas fa-calendar-times" style="color:var(--danger);"></i> Cancelar Agendamento</h3>
-                <p class="text-xs text-muted mb-12">Informe o motivo do cancelamento. O cliente sera notificado via WhatsApp.</p>
+                <p class="text-xs text-muted mb-12">Informe o motivo do cancelamento. O cliente será notificado via WhatsApp.</p>
                 <div class="cancel-reason-group">
                     <textarea id="cancel-booking-reason" rows="3" placeholder="Ex: Necessidade de remarcacao, imprevisto..."></textarea>
                 </div>
@@ -375,10 +431,10 @@
         <div class="bottom-sheet" id="reject-sheet">
             <div class="bottom-sheet-handle"></div>
             <div>
-                <h3 class="bottom-sheet-title" style="margin-bottom:6px;"><i class="fas fa-times-circle" style="color:var(--danger);"></i> Motivo da Rejeicao</h3>
+                <h3 class="bottom-sheet-title" style="margin-bottom:6px;"><i class="fas fa-times-circle" style="color:var(--danger);"></i> Motivo da Rejeição</h3>
                 <p class="text-xs text-muted mb-12">Informe o motivo para que o cliente seja notificado via WhatsApp.</p>
                 <div class="cancel-reason-group">
-                    <textarea id="reject-reason" rows="3" placeholder="Ex: Horario indisponivel, por favor escolha outro horario..."></textarea>
+                    <textarea id="reject-reason" rows="3" placeholder="Ex: Horário indisponivel, por favor escolha outro horário..."></textarea>
                 </div>
                 <div class="flex gap-8 mt-16">
                     <button class="btn btn-outline" style="flex:1;" onclick="closeRejectModal()">Cancelar</button>
@@ -391,7 +447,7 @@
         <div class="modal-overlay" id="edit-svc-overlay" onclick="closeEditServiceModal()"></div>
         <div class="bottom-sheet" id="edit-svc-sheet" style="max-height:90vh;overflow-y:auto;">
             <div class="bottom-sheet-handle"></div>
-            <h3 class="bottom-sheet-title mb-16"><i class="fas fa-pen" style="color:var(--accent);"></i> Editar Servico</h3>
+            <h3 class="bottom-sheet-title mb-16"><i class="fas fa-pen" style="color:var(--accent);"></i> Editar Serviço</h3>
             <div class="edit-modal-preview mb-12" id="edit-svc-preview">
                 <img id="edit-svc-img-preview" src="" alt="Preview">
                 <button class="edit-badge" onclick="pickEditServiceImage()"><i class="fas fa-camera"></i></button>
@@ -403,7 +459,7 @@
                 <input type="text" class="form-control" id="edit-svc-name" required>
             </div>
             <div class="form-group">
-                <label class="form-label">Descricao</label>
+                <label class="form-label">Descrição</label>
                 <input type="text" class="form-control" id="edit-svc-desc">
             </div>
             <div class="form-row">
@@ -412,12 +468,12 @@
                     <input type="number" step="0.01" min="0" class="form-control" id="edit-svc-price" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Duracao (min)</label>
+                    <label class="form-label">Duração (min)</label>
                     <input type="number" min="10" step="5" class="form-control" id="edit-svc-duration" required>
                 </div>
             </div>
             <div class="form-group">
-                <label class="form-label">Preparacao (min)</label>
+                <label class="form-label">Preparação (min)</label>
                 <input type="number" min="0" step="5" class="form-control" id="edit-svc-prep">
             </div>
             <div class="flex gap-8 mt-16">
@@ -442,7 +498,7 @@
                 <input type="text" class="form-control" id="edit-prod-name" required>
             </div>
             <div class="form-group">
-                <label class="form-label">Descricao</label>
+                <label class="form-label">Descrição</label>
                 <input type="text" class="form-control" id="edit-prod-desc">
             </div>
             <div class="form-group">
@@ -456,7 +512,7 @@
                         <i class="fas fa-boxes-stacked"></i> Quantidade
                     </button>
                     <button type="button" class="period-btn" id="edit-stock-type-requisicao" onclick="setEditStockType('requisicao')">
-                        <i class="fas fa-truck"></i> Sob Requisicao
+                        <i class="fas fa-truck"></i> Sob Requisição
                     </button>
                 </div>
             </div>
@@ -485,10 +541,10 @@
         </div>
 
         <nav class="bottom-nav">
-            <a href="index.html" class="nav-btn"><i class="fas fa-home"></i><span>Inicio</span></a>
+            <a href="index.html" class="nav-btn"><i class="fas fa-home"></i><span>Início</span></a>
             <a href="agendar.html" class="nav-btn"><i class="far fa-calendar-plus"></i><span>Agendar</span></a>
-            <a href="catalogo.html" class="nav-btn"><i class="fas fa-th-large"></i><span>Catalogo</span></a>
-            <a href="gestao.html" class="nav-btn active"><i class="fas fa-cog"></i><span>Gestao</span></a>
+            <a href="catalogo.html" class="nav-btn"><i class="fas fa-th-large"></i><span>Catálogo</span></a>
+            <a href="gestao.html" class="nav-btn active"><i class="fas fa-cog"></i><span>Gestão</span></a>
         </nav>
     </div>
 
@@ -501,7 +557,7 @@
     <script src="firebase-config.js"></script>
     <script src="app.js"></script>
     <script>
-        const DAY_NAMES = ['Domingo', 'Segunda', 'Terca', 'Quarta', 'Quinta', 'Sexta', 'Sabado'];
+        const DAY_NAMES = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
         const DAY_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
         let deleteTarget = null;
         let rejectTarget = null; // { type: 'booking'|'order', id, phone, clientName, ... }
@@ -526,6 +582,55 @@
             setupRealtimeListeners();
         });
 
+        let adminSettingsMaskApplied = false;
+
+        async function openAdminSettingsModal() {
+            const nameEl = document.getElementById('admin-whatsapp-name');
+            const numEl = document.getElementById('admin-whatsapp-number');
+            if (!adminSettingsMaskApplied) {
+                applyPhoneMask(numEl);
+                adminSettingsMaskApplied = true;
+            }
+            try {
+                const cfg = await getSiteConfig();
+                nameEl.value = cfg.whatsappName || '';
+                numEl.value = cfg.whatsappNumber || '';
+            } catch(e) {
+                nameEl.value = '';
+                numEl.value = '';
+            }
+            openModal('admin-settings-overlay', 'admin-settings-sheet');
+            setTimeout(() => nameEl.focus(), 300);
+        }
+
+        function closeAdminSettingsModal() {
+            closeModal('admin-settings-overlay', 'admin-settings-sheet');
+        }
+
+        async function saveAdminWhatsapp() {
+            const name = document.getElementById('admin-whatsapp-name').value.trim();
+            const num = document.getElementById('admin-whatsapp-number').value.trim();
+            const digits = num.replace(/\D/g, '');
+            const btn = document.getElementById('btn-save-admin-whatsapp');
+
+            if (num && digits.length < 10) {
+                showToast('Número inválido. Use DDD + número (mínimo 10 dígitos).', 'error');
+                return;
+            }
+
+            btnLoading(btn, true);
+            try {
+                await updateSiteConfig({ whatsappName: name, whatsappNumber: num });
+                await applyLogoConfig();
+                closeAdminSettingsModal();
+                showToast('Contato WhatsApp atualizado!', 'success');
+            } catch(e) {
+                showToast('Erro ao salvar: ' + e.message, 'error');
+            } finally {
+                btnLoading(btn, false);
+            }
+        }
+
         function switchTab(name, btn) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -533,8 +638,8 @@
             document.getElementById('tab-' + name).classList.add('active');
             if (name === 'agenda') renderAgenda();
             if (name === 'disponibilidade') renderAvailability();
-            if (name === 'aprovacoes') { renderPendingBookings(); renderPendingOrders(); renderPendingRedemptions(); }
-            if (name === 'promocoes') { renderPromotionFormSelects(); renderPromotionsList(); }
+            if (name === 'aprovações') { renderPendingBookings(); renderPendingOrders(); renderPendingRedemptions(); }
+            if (name === 'promoções') { renderPromotionFormSelects(); renderPromotionsList(); }
         }
 
         async function refreshAll() {
@@ -570,11 +675,11 @@
             const tab = getActiveTab();
             renderDashboard();
             if (tab === 'agenda') renderAgenda();
-            if (tab === 'servicos') renderServicesList();
+            if (tab === 'serviços') renderServicesList();
             if (tab === 'produtos') renderProductsList();
-            if (tab === 'aprovacoes') { renderPendingBookings(); renderPendingOrders(); renderPendingRedemptions(); }
+            if (tab === 'aprovações') { renderPendingBookings(); renderPendingOrders(); renderPendingRedemptions(); }
             if (tab === 'disponibilidade') { renderAvailability(); renderBlockedDates(); }
-            if (tab === 'promocoes') { renderPromotionFormSelects(); renderPromotionsList(); }
+            if (tab === 'promoções') { renderPromotionFormSelects(); renderPromotionsList(); }
         }
 
         function setupRealtimeListeners() {
@@ -599,7 +704,7 @@
                 db.collection('promotionRedemptions').onSnapshot(snap => {
                     cachedRedemptions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     renderDashboard();
-                    if (getActiveTab() === 'aprovacoes') renderPendingRedemptions();
+                    if (getActiveTab() === 'aprovações') renderPendingRedemptions();
                 }, err => console.error('redemptions listener error:', err));
             } catch(e) { console.error(e); }
         }
@@ -677,7 +782,7 @@
                     <div class="agenda-info" style="flex:1;min-width:120px;">
                         <div class="agenda-client">${b.clientName}</div>
                         <div class="agenda-service">${b.serviceName} · ${b.duration}min · R$ ${fmtPrice(b.price || 0)}</div>
-                        <div class="text-xs text-muted mt-4"><i class="fab fa-whatsapp" style="color:#25d366;"></i> ${b.clientPhone || 'Nao informado'}</div>
+                        <div class="text-xs text-muted mt-4"><i class="fab fa-whatsapp" style="color:#25d366;"></i> ${b.clientPhone || 'Não informado'}</div>
                     </div>
                     <div class="approval-actions">
                         <button class="btn-approve approve" onclick="approveBooking('${b.id}', '${(b.clientPhone || '').replace(/'/g, "\\'")}', '${(b.clientName || '').replace(/'/g, "\\'")}', '${(b.serviceName || '').replace(/'/g, "\\'")}', '${b.date}', '${b.time}')">
@@ -696,7 +801,7 @@
 
                 if (phone) {
                     const dateLabel = formatDateBR(date);
-                    const msg = `Ola ${clientName}! Seu agendamento na Poar Estetica foi CONFIRMADO!\n\nServico: ${serviceName}\nData: ${dateLabel}\nHorario: ${time}\n\nAguardamos voce!`;
+                    const msg = `Ola ${clientName}! Seu agendamento na Poar Estética foi CONFIRMADO!\n\nServico: ${serviceName}\nData: ${dateLabel}\nHorario: ${time}\n\nAguardamos você!`;
                     sendWhatsApp(phone, msg).catch(err => console.error('WAHA error:', err));
                 }
 
@@ -721,7 +826,7 @@
             }
             container.innerHTML = pending.map(o => {
                 const product = cachedProducts.find(p => p.id === o.productId);
-                const stockInfo = product ? (product.stockType === 'quantidade' ? `Estoque: ${product.stockQuantity || 0}` : `Sob requisicao`) : '';
+                const stockInfo = product ? (product.stockType === 'quantidade' ? `Estoque: ${product.stockQuantity || 0}` : `Sob requisição`) : '';
                 return `
                 <div class="order-card">
                     <div style="display:flex;gap:12px;align-items:flex-start;">
@@ -729,7 +834,7 @@
                             <div class="fw-600 text-sm">${o.productName || 'Produto'}</div>
                             <div class="text-xs text-muted">Cliente: ${o.clientName || o.clientEmail}</div>
                             <div class="text-xs text-muted">Qtd: ${o.quantity || 1} · R$ ${fmtPrice(o.totalPrice || (o.unitPrice || o.price || 0) * (o.quantity || 1))}</div>
-                            <div class="text-xs text-muted"><i class="fab fa-whatsapp" style="color:#25d366;"></i> ${o.clientPhone || 'Nao informado'}</div>
+                            <div class="text-xs text-muted"><i class="fab fa-whatsapp" style="color:#25d366;"></i> ${o.clientPhone || 'Não informado'}</div>
                             ${stockInfo ? `<div class="text-xs text-muted mt-4">${stockInfo}</div>` : ''}
                         </div>
                         <span class="status-badge status-pendente">Pendente</span>
@@ -766,7 +871,7 @@
                             <div class="fw-600 text-sm"><i class="fas fa-gift" style="color:#f59e0b;"></i> Resgate: ${r.freeCount || 1}x ${r.rewardTargetName || 'brinde'}</div>
                             <div class="text-xs text-muted">Cliente: ${r.clientName || r.clientEmail}</div>
                             <div class="text-xs text-muted">Promoção: ${r.promotionDesc || r.requiredTargetName || ''}</div>
-                            <div class="text-xs text-muted"><i class="fab fa-whatsapp" style="color:#25d366;"></i> ${r.clientPhone || 'Nao informado'}</div>
+                            <div class="text-xs text-muted"><i class="fab fa-whatsapp" style="color:#25d366;"></i> ${r.clientPhone || 'Não informado'}</div>
                         </div>
                         <span class="status-badge status-pendente">Aguardando</span>
                     </div>
@@ -821,7 +926,7 @@
         async function approveOrder(id) {
             try {
                 const order = cachedOrders.find(o => o.id === id);
-                if (!order) { showToast('Pedido nao encontrado', 'error'); return; }
+                if (!order) { showToast('Pedido não encontrado', 'error'); return; }
 
                 const product = cachedProducts.find(p => p.id === order.productId);
 
@@ -836,7 +941,7 @@
 
                 // Send WhatsApp
                 if (order.clientPhone) {
-                    let msg = `Ola ${order.clientName || 'cliente'}! Seu pedido na Poar Estetica foi APROVADO!\n\nProduto: ${order.productName}\nQuantidade: ${order.quantity || 1}`;
+                    let msg = `Ola ${order.clientName || 'cliente'}! Seu pedido na Poar Estética foi APROVADO!\n\nProduto: ${order.productName}\nQuantidade: ${order.quantity || 1}`;
 
                     if (product && product.stockType === 'requisicao' && product.deliveryTime) {
                         msg += `\nPrazo de entrega: ${product.deliveryTime}`;
@@ -871,7 +976,7 @@
         async function confirmReject() {
             if (!rejectTarget) return;
             const reason = document.getElementById('reject-reason').value.trim();
-            if (!reason) { showToast('Informe o motivo da rejeicao', 'error'); return; }
+            if (!reason) { showToast('Informe o motivo da rejeição', 'error'); return; }
 
             try {
                 if (rejectTarget.type === 'booking') {
@@ -879,7 +984,7 @@
 
                     if (rejectTarget.phone) {
                         const dateLabel = rejectTarget.date ? formatDateBR(rejectTarget.date) : '';
-                        const msg = `Ola ${rejectTarget.clientName}! Infelizmente seu agendamento na Poar Estetica foi CANCELADO.\n\nServico: ${rejectTarget.itemName}${dateLabel ? `\nData: ${dateLabel}` : ''}${rejectTarget.time ? `\nHorario: ${rejectTarget.time}` : ''}\n\nMotivo: ${reason}\n\nPor favor, entre em contato para reagendar.`;
+                        const msg = `Ola ${rejectTarget.clientName}! Infelizmente seu agendamento na Poar Estética foi CANCELADO.\n\nServico: ${rejectTarget.itemName}${dateLabel ? `\nData: ${dateLabel}` : ''}${rejectTarget.time ? `\nHorario: ${rejectTarget.time}` : ''}\n\nMotivo: ${reason}\n\nPor favor, entre em contato para reagendar.`;
                         sendWhatsApp(rejectTarget.phone, msg).catch(err => console.error('WAHA error:', err));
                     }
 
@@ -890,7 +995,7 @@
                     await updateProductOrder(rejectTarget.id, { status: 'cancelado', cancelReason: reason });
 
                     if (rejectTarget.phone) {
-                        const msg = `Ola ${rejectTarget.clientName}! Infelizmente seu pedido na Poar Estetica foi CANCELADO.\n\nProduto: ${rejectTarget.itemName}\n\nMotivo: ${reason}\n\nPor favor, entre em contato para mais informacoes.`;
+                        const msg = `Ola ${rejectTarget.clientName}! Infelizmente seu pedido na Poar Estética foi CANCELADO.\n\nProduto: ${rejectTarget.itemName}\n\nMotivo: ${reason}\n\nPor favor, entre em contato para mais informações.`;
                         sendWhatsApp(rejectTarget.phone, msg).catch(err => console.error('WAHA error:', err));
                     }
 
@@ -940,7 +1045,7 @@
                 document.getElementById('svc-prep').value = '0';
                 document.getElementById('svc-image-label').textContent = 'Selecionar';
                 pendingServiceImage = '';
-                showToast('Servico cadastrado!', 'success');
+                showToast('Serviço cadastrado!', 'success');
                 cachedServices = await getServices();
                 renderServicesList();
                 renderDashboard();
@@ -950,7 +1055,7 @@
         function renderServicesList() {
             const container = document.getElementById('services-list');
             if (cachedServices.length === 0) {
-                container.innerHTML = '<div class="empty-state"><i class="fas fa-spa"></i><p>Nenhum servico cadastrado</p></div>';
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-spa"></i><p>Nenhum serviço cadastrado</p></div>';
                 return;
             }
             container.classList.add('content-ready', 'stagger-in');
@@ -1020,7 +1125,7 @@
             try {
                 await updateService(id, data);
                 closeEditServiceModal();
-                showToast('Servico atualizado!', 'success');
+                showToast('Serviço atualizado!', 'success');
                 cachedServices = await getServices();
                 renderServicesList();
                 renderDashboard();
@@ -1089,7 +1194,7 @@
 
         function getStockBadge(p) {
             if (p.stockType === 'requisicao') {
-                return `<span class="stock-badge" style="background:#f3e8ff;color:#7c3aed;">Sob requisicao</span>`;
+                return `<span class="stock-badge" style="background:#f3e8ff;color:#7c3aed;">Sob requisição</span>`;
             }
             const qty = p.stockQuantity || 0;
             const alert = p.stockAlert || 3;
@@ -1135,7 +1240,7 @@
                         </div>
                         <div class="list-item-content">
                             <div class="list-item-title">${p.name}</div>
-                            <div class="list-item-subtitle">${p.description || 'Sem descricao'}</div>
+                            <div class="list-item-subtitle">${p.description || 'Sem descrição'}</div>
                             <div style="margin-top:4px;">${getStockBadge(p)}</div>
                         </div>
                         <div class="list-item-end" style="display:flex;align-items:center;gap:4px;">
@@ -1245,13 +1350,13 @@
                                 <div>
                                     <div class="avail-section-label">Periodo de atendimento</div>
                                     <div class="period-selector" id="period-selector-${i}">
-                                        <button type="button" class="period-btn ${currentPeriod === 'manha' ? 'active' : ''}" onclick="setPeriod(${i}, 'manha')"><i class="fas fa-sun"></i> Manha</button>
+                                        <button type="button" class="period-btn ${currentPeriod === 'manha' ? 'active' : ''}" onclick="setPeriod(${i}, 'manha')"><i class="fas fa-sun"></i> Manhã</button>
                                         <button type="button" class="period-btn ${currentPeriod === 'tarde' ? 'active' : ''}" onclick="setPeriod(${i}, 'tarde')"><i class="fas fa-cloud-sun"></i> Tarde</button>
                                         <button type="button" class="period-btn ${currentPeriod === 'ambos' ? 'active' : ''}" onclick="setPeriod(${i}, 'ambos')"><i class="fas fa-calendar-day"></i> Dia todo</button>
                                     </div>
                                 </div>
                                 <div>
-                                    <div class="avail-section-label">Horario de funcionamento</div>
+                                    <div class="avail-section-label">Horário de funcionamento</div>
                                     <div class="avail-times">
                                         <div class="avail-time-group">
                                             <label>Abre</label>
@@ -1264,10 +1369,10 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <div class="avail-section-label">Intervalo / Almoco</div>
+                                    <div class="avail-section-label">Intervalo / Almoço</div>
                                     <div class="avail-times">
                                         <div class="avail-time-group">
-                                            <label>Inicio</label>
+                                            <label>Início</label>
                                             <input type="time" class="avail-time-input" value="${config.lunchStart || '12:00'}" id="avail-lunch-s-${i}" ${dis}>
                                         </div>
                                         <div class="avail-time-group">
@@ -1353,49 +1458,162 @@
                         lunchEnd: document.getElementById(`avail-lunch-e-${i}`).value
                     });
                 }
-                showToast('Horarios salvos com sucesso!', 'success');
+                showToast('Horários salvos com sucesso!', 'success');
             } catch(e) { showToast('Erro ao salvar: ' + e.message, 'error'); }
         }
 
         // ===== BLOCKED DATES =====
+        // Group consecutive blocked dates with the same reason into a "period card".
+        function groupBlockedDates(blocked) {
+            const sorted = blocked
+                .map(b => ({ date: b.date || b.id, reason: b.reason || '' }))
+                .sort((a, b) => a.date.localeCompare(b.date));
+            const groups = [];
+            for (const item of sorted) {
+                const last = groups[groups.length - 1];
+                if (!last) { groups.push({ start: item.date, end: item.date, reason: item.reason, dates: [item.date] }); continue; }
+                const lastEndDate = new Date(last.end + 'T12:00:00');
+                lastEndDate.setDate(lastEndDate.getDate() + 1);
+                const nextStr = lastEndDate.toISOString().split('T')[0];
+                if (item.date === nextStr && item.reason === last.reason) {
+                    last.end = item.date;
+                    last.dates.push(item.date);
+                } else {
+                    groups.push({ start: item.date, end: item.date, reason: item.reason, dates: [item.date] });
+                }
+            }
+            return groups;
+        }
+
         async function renderBlockedDates() {
             try {
                 const blocked = await getBlockedDates();
                 const container = document.getElementById('blocked-dates-list');
                 if (blocked.length === 0) {
-                    container.innerHTML = '<p class="text-xs text-muted">Nenhuma data bloqueada.</p>';
+                    container.innerHTML = '<div class="block-empty"><i class="fas fa-umbrella-beach"></i><p class="text-xs text-muted">Nenhum período bloqueado</p></div>';
                     return;
                 }
-                container.innerHTML = blocked.sort((a,b) => (a.date || a.id).localeCompare(b.date || b.id)).map(b => `
-                    <div class="flex items-center justify-between" style="padding:6px 0;border-bottom:1px solid var(--border-light);">
-                        <div>
-                            <span class="text-sm fw-600">${formatDateShort(b.date || b.id)}</span>
-                            ${b.reason ? `<span class="text-xs text-muted"> — ${b.reason}</span>` : ''}
-                        </div>
-                        <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="unblockDate('${b.date || b.id}')"><i class="fas fa-times"></i></button>
-                    </div>`).join('');
+                const groups = groupBlockedDates(blocked);
+                const today = new Date().toISOString().split('T')[0];
+                container.innerHTML = `
+                    <p class="text-xs fw-600 text-muted mb-12" style="text-transform:uppercase;letter-spacing:0.04em;">
+                        <i class="fas fa-ban" style="color:var(--danger);"></i> ${groups.length} período${groups.length > 1 ? 's' : ''} bloqueado${groups.length > 1 ? 's' : ''}
+                    </p>
+                    <div class="block-list">
+                    ${groups.map(g => {
+                        const isPast = g.end < today;
+                        const days = g.dates.length;
+                        const singleDay = g.start === g.end;
+                        const datesJson = JSON.stringify(g.dates).replace(/"/g, '&quot;');
+                        return `
+                            <div class="block-period-card ${isPast ? 'past' : ''}">
+                                <div class="block-period-icon">
+                                    <i class="fas fa-${singleDay ? 'calendar-day' : 'calendar-week'}"></i>
+                                </div>
+                                <div class="block-period-info">
+                                    <div class="block-period-range">
+                                        ${singleDay
+                                            ? formatDateShort(g.start)
+                                            : `${formatDateShort(g.start)} <i class="fas fa-arrow-right text-xs"></i> ${formatDateShort(g.end)}`}
+                                    </div>
+                                    <div class="block-period-meta">
+                                        <span class="chip" style="font-size:0.65rem;cursor:default;">${days} dia${days > 1 ? 's' : ''}</span>
+                                        ${g.reason ? `<span class="text-xs" style="color:var(--text-muted);"><i class="fas fa-info-circle"></i> ${g.reason}</span>` : ''}
+                                        ${isPast ? '<span class="text-xs" style="color:var(--text-muted);">(já passou)</span>' : ''}
+                                    </div>
+                                </div>
+                                <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick='unblockPeriod(${datesJson})' title="Remover bloqueio">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>`;
+                    }).join('')}
+                    </div>`;
             } catch(e) { console.error(e); }
         }
 
-        async function blockDate() {
-            const dateStr = document.getElementById('block-date').value;
+        // ===== Date range helpers =====
+        function eachDayInRange(start, end) {
+            const out = [];
+            const s = new Date(start + 'T12:00:00');
+            const e = new Date(end + 'T12:00:00');
+            for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+                out.push(d.toISOString().split('T')[0]);
+            }
+            return out;
+        }
+
+        async function blockDateRange() {
+            const start = document.getElementById('block-date-start').value;
+            const endRaw = document.getElementById('block-date-end').value;
             const reason = document.getElementById('block-reason').value.trim();
-            if (!dateStr) { showToast('Selecione uma data', 'error'); return; }
+            const end = endRaw || start;
+
+            if (!start) { showToast('Selecione a data inicial', 'error'); return; }
+            if (end < start) { showToast('A data final deve ser maior ou igual à inicial', 'error'); return; }
+
+            const dates = eachDayInRange(start, end);
+            if (dates.length > 365) {
+                showToast('Período muito grande (máximo 1 ano)', 'error');
+                return;
+            }
+
             try {
-                await addBlockedDate(dateStr, reason);
-                document.getElementById('block-date').value = '';
+                // Save each day in parallel
+                await Promise.all(dates.map(d => addBlockedDate(d, reason)));
+                document.getElementById('block-date-start').value = '';
+                document.getElementById('block-date-end').value = '';
                 document.getElementById('block-reason').value = '';
-                showToast('Data bloqueada!', 'success');
+                showToast(`✅ ${dates.length} dia${dates.length > 1 ? 's' : ''} bloqueado${dates.length > 1 ? 's' : ''}!`, 'success');
                 renderBlockedDates();
-            } catch(e) { showToast('Erro', 'error'); }
+            } catch(e) {
+                showToast('Erro ao bloquear: ' + e.message, 'error');
+            }
+        }
+
+        function quickBlockPreset(preset) {
+            const today = new Date();
+            const startEl = document.getElementById('block-date-start');
+            const endEl = document.getElementById('block-date-end');
+            const reasonEl = document.getElementById('block-reason');
+
+            if (preset === 'weekend') {
+                // Find next Saturday and Sunday
+                const day = today.getDay(); // 0 = Sunday, 6 = Saturday
+                const daysUntilSat = day === 6 ? 0 : (6 - day + 7) % 7;
+                const sat = new Date(today); sat.setDate(today.getDate() + daysUntilSat);
+                const sun = new Date(sat); sun.setDate(sat.getDate() + 1);
+                startEl.value = sat.toISOString().split('T')[0];
+                endEl.value = sun.toISOString().split('T')[0];
+                if (!reasonEl.value) reasonEl.value = 'Fim de semana';
+            } else if (preset === 'week') {
+                const start = new Date(today); start.setDate(today.getDate() + 1);
+                const end = new Date(start); end.setDate(start.getDate() + 6);
+                startEl.value = start.toISOString().split('T')[0];
+                endEl.value = end.toISOString().split('T')[0];
+                if (!reasonEl.value) reasonEl.value = 'Recesso';
+            } else if (preset === 'month') {
+                const start = new Date(today); start.setDate(today.getDate() + 1);
+                const end = new Date(start); end.setDate(start.getDate() + 29);
+                startEl.value = start.toISOString().split('T')[0];
+                endEl.value = end.toISOString().split('T')[0];
+                if (!reasonEl.value) reasonEl.value = 'Recesso de férias';
+            }
+        }
+
+        async function unblockPeriod(dates) {
+            const list = Array.isArray(dates) ? dates : [dates];
+            if (!confirm(`Desbloquear ${list.length} dia${list.length > 1 ? 's' : ''}?`)) return;
+            try {
+                await Promise.all(list.map(d => removeBlockedDate(d)));
+                showToast('Período desbloqueado', 'success');
+                renderBlockedDates();
+            } catch(e) {
+                showToast('Erro: ' + e.message, 'error');
+            }
         }
 
         async function unblockDate(dateStr) {
-            try {
-                await removeBlockedDate(dateStr);
-                showToast('Data desbloqueada', 'success');
-                renderBlockedDates();
-            } catch(e) { showToast('Erro', 'error'); }
+            return unblockPeriod([dateStr]);
         }
 
         // ===== PROMOTIONS =====
@@ -1479,7 +1697,7 @@
                 document.getElementById('form-promo').reset();
                 document.getElementById('promo-required-target').innerHTML = '<option value="">Selecione o tipo primeiro...</option>';
                 document.getElementById('promo-reward-target').innerHTML = '<option value="">Selecione o tipo primeiro...</option>';
-                showToast('Promocao criada!', 'success');
+                showToast('Promoção criada!', 'success');
                 renderPromotionsList();
             } catch(e) { showToast('Erro: ' + e.message, 'error'); }
         }
@@ -1489,7 +1707,7 @@
                 const promos = await getAllPromotions();
                 const container = document.getElementById('promotions-list');
                 if (promos.length === 0) {
-                    container.innerHTML = '<div class="empty-state"><i class="fas fa-gift"></i><p>Nenhuma promocao criada</p></div>';
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-gift"></i><p>Nenhuma promoção criada</p></div>';
                     return;
                 }
                 container.innerHTML = promos.map(p => {
@@ -1501,7 +1719,7 @@
                             <div class="promo-icon"><i class="fas fa-gift"></i></div>
                             <div class="promo-info" style="flex:1;">
                                 <h4 class="promo-title">${reqLabel}</h4>
-                                <p class="promo-desc">${p.description || `Faca ${p.requiredCount || p.requiredCount}x e ganhe ${rewLabel} gratis`}</p>
+                                <p class="promo-desc">${p.description || `Faça ${p.requiredCount || p.requiredCount}x e ganhe ${rewLabel} gratis`}</p>
                             </div>
                             <div class="flex gap-8" style="align-items:center;">
                                 <span class="status-badge ${p.active ? 'status-confirmado' : 'status-cancelado'}">${p.active ? 'Ativa' : 'Inativa'}</span>
@@ -1524,7 +1742,7 @@
         async function togglePromo(id, active) {
             try {
                 await updatePromotion(id, { active });
-                showToast(active ? 'Promocao ativada!' : 'Promocao desativada.', 'success');
+                showToast(active ? 'Promoção ativada!' : 'Promoção desativada.', 'success');
                 renderPromotionsList();
             } catch(e) { showToast('Erro', 'error'); }
         }
@@ -1561,7 +1779,7 @@
                             <div class="agenda-client">${b.clientName}</div>
                             <div class="agenda-service">${b.serviceName} · ${b.duration}min</div>
                             ${b.prepTime > 0 ? `<div class="agenda-prep"><i class="fas fa-eye-slash"></i> +${b.prepTime}min prep (bloqueio: ${totalTime}min)</div>` : ''}
-                            <div class="text-xs text-muted mt-4"><i class="fab fa-whatsapp" style="color:#25d366;"></i> ${b.clientPhone || 'Nao informado'}</div>
+                            <div class="text-xs text-muted mt-4"><i class="fab fa-whatsapp" style="color:#25d366;"></i> ${b.clientPhone || 'Não informado'}</div>
                         </div>
                         <div style="text-align:right;">
                             <span class="status-badge ${statusClass} mb-8">${statusLabel}</span><br>
@@ -1584,7 +1802,7 @@
             }
             // For services, products, promotions: simple delete
             deleteTarget = { type, id };
-            document.getElementById('delete-message').textContent = `Deseja excluir "${name}"? Esta acao nao pode ser desfeita.`;
+            document.getElementById('delete-message').textContent = `Deseja excluir "${name}"? Esta ação não pode ser desfeita.`;
             openModal('delete-overlay', 'delete-sheet');
         }
 
@@ -1614,7 +1832,7 @@
 
                 if (cancelBookingTarget.phone) {
                     const dateLabel = cancelBookingTarget.date ? formatDateBR(cancelBookingTarget.date) : '';
-                    const msg = `Ola ${cancelBookingTarget.name}! Infelizmente seu agendamento na Poar Estetica foi CANCELADO.\n\nServico: ${cancelBookingTarget.serviceName}${dateLabel ? `\nData: ${dateLabel}` : ''}${cancelBookingTarget.time ? `\nHorario: ${cancelBookingTarget.time}` : ''}\n\nMotivo: ${reason}\n\nPor favor, entre em contato para reagendar.`;
+                    const msg = `Ola ${cancelBookingTarget.name}! Infelizmente seu agendamento na Poar Estética foi CANCELADO.\n\nServico: ${cancelBookingTarget.serviceName}${dateLabel ? `\nData: ${dateLabel}` : ''}${cancelBookingTarget.time ? `\nHorario: ${cancelBookingTarget.time}` : ''}\n\nMotivo: ${reason}\n\nPor favor, entre em contato para reagendar.`;
                     sendWhatsApp(cancelBookingTarget.phone, msg).catch(err => console.error('WAHA error:', err));
                 }
 
