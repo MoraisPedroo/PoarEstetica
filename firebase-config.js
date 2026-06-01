@@ -61,14 +61,23 @@ function normalisePhone(phone) {
     return (phone || '').replace(/\D/g, '');
 }
 
-// Creates (or overwrites) a verification record keyed by phone digits.
-// Stores the code, target email/name, expiry, and attempt counter.
 async function createVerificationCode(phone, email, name) {
+    console.group('[VERIF] createVerificationCode');
+    console.log('input phone:', phone);
+    console.log('input email:', email);
+    console.log('input name:', name);
+
     const digits = normalisePhone(phone);
-    if (!digits) throw new Error('Telefone inválido');
+    console.log('normalised digits:', digits);
+
+    if (!digits) {
+        console.error('Telefone inválido — abortando');
+        console.groupEnd();
+        throw new Error('Telefone inválido');
+    }
     const code = generateVerificationCode();
-    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
-    await db.collection('verificationCodes').doc(digits).set({
+    const expiresAt = Date.now() + 10 * 60 * 1000;
+    const payload = {
         phone: digits,
         email: (email || '').toLowerCase().trim(),
         name: name || '',
@@ -76,8 +85,21 @@ async function createVerificationCode(phone, email, name) {
         expiresAt,
         attempts: 0,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    return code;
+    };
+    console.log('writing to verificationCodes/' + digits, payload);
+
+    try {
+        await db.collection('verificationCodes').doc(digits).set(payload);
+        console.log('Firestore write OK — code:', code);
+        console.groupEnd();
+        return code;
+    } catch (err) {
+        console.error('Firestore write FAILED:', err);
+        console.error('error code:', err.code);
+        console.error('error message:', err.message);
+        console.groupEnd();
+        throw err;
+    }
 }
 
 // Checks a code submitted by the user. Returns { ok: true, data } or { ok: false, reason }.
@@ -391,30 +413,81 @@ function removeAccents(str) {
     return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
-/**
- */
 async function sendWhatsApp(phone, message) {
+    console.group('[WAHA] sendWhatsApp');
+    console.log('[WAHA] input phone:', phone);
+    console.log('[WAHA] input message:', message);
+
     const chatIds = getPhoneVariations(phone);
+    console.log('[WAHA] phone variations (chatIds):', chatIds);
+
     const cleanMessage = removeAccents(message);
+    console.log('[WAHA] message after removeAccents:', cleanMessage);
+
     const url = getWahaUrl();
+    console.log('[WAHA] proxy url:', url);
+    console.log('[WAHA] WAHA_SESSION:', WAHA_SESSION);
+    console.log('[WAHA] window.location.protocol:', window.location.protocol);
+    console.log('[WAHA] window.location.host:', window.location.host);
+
     const results = [];
-    // Send to ALL variations — do NOT break on first success.
-    for (const chatId of chatIds) {
+    for (let i = 0; i < chatIds.length; i++) {
+        const chatId = chatIds[i];
+        const attemptLabel = `[WAHA] attempt ${i + 1}/${chatIds.length} chatId=${chatId}`;
+        console.group(attemptLabel);
+
+        const payload = { chatId, text: cleanMessage, session: WAHA_SESSION };
+        console.log('payload:', payload);
+
+        const startedAt = Date.now();
         try {
+            console.log('fetch ->', url);
             const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chatId,
-                    text: cleanMessage,
-                    session: WAHA_SESSION
-                })
+                body: JSON.stringify(payload)
             });
-            results.push({ chatId, ok: res.ok, status: res.status });
+            const elapsed = Date.now() - startedAt;
+            const text = await res.text();
+            let parsed;
+            try { parsed = JSON.parse(text); } catch { parsed = text; }
+
+            console.log('response status:', res.status, res.statusText);
+            console.log('response ok:', res.ok);
+            console.log('response time (ms):', elapsed);
+            console.log('response headers:');
+            res.headers.forEach((v, k) => console.log('  ', k, '=', v));
+            console.log('response body:', parsed);
+
+            results.push({
+                chatId,
+                ok: res.ok,
+                status: res.status,
+                statusText: res.statusText,
+                elapsedMs: elapsed,
+                body: parsed
+            });
         } catch (err) {
-            results.push({ chatId, ok: false, error: err.message });
+            const elapsed = Date.now() - startedAt;
+            console.error('fetch threw after', elapsed, 'ms:', err);
+            console.error('error name:', err.name);
+            console.error('error message:', err.message);
+            console.error('error stack:', err.stack);
+            results.push({
+                chatId,
+                ok: false,
+                error: err.message,
+                errorName: err.name,
+                elapsedMs: elapsed
+            });
         }
+        console.groupEnd();
     }
+
+    results.anySuccess = results.some(r => r.ok);
+    console.log('[WAHA] anySuccess:', results.anySuccess);
+    console.log('[WAHA] all results:', results);
+    console.groupEnd();
     return results;
 }
 
