@@ -344,7 +344,13 @@
         async function openDay(dateStr, dow) {
             selectedDate = dateStr;
             selectedTime = null;
-            selectedService = null;
+            // Preserva o servico pre-selecionado (vindo de ?service=ID).
+            // No fluxo normal, reseta para o cliente escolher no horario.
+            if (preselectedServiceId) {
+                selectedService = cachedServices.find(s => s.id === preselectedServiceId) || selectedService;
+            } else {
+                selectedService = null;
+            }
 
             // Highlight
             document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
@@ -483,7 +489,7 @@
                     showToast(reason, 'error');
                     return;
                 }
-                // Reuse selectServiceForBooking with the locked-in service ID
+                // Servico ja escolhido: vai direto para a confirmacao
                 setTimeout(() => selectServiceForBooking(selectedService.id), 200);
                 return;
             }

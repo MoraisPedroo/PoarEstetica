@@ -560,38 +560,19 @@
 
             btnLoading(btn, true);
 
-            console.group('[REGISTER] handleRegister start');
-            console.log('input:', { name, email, phone, phoneDigits: phone.replace(/\D/g, '') });
-
             try {
-                console.log('[REGISTER] step 1: createVerificationCode');
                 const code = await createVerificationCode(phone, email, name);
-                console.log('[REGISTER] code generated:', code);
-
                 const msg = `Olá ${name}!\n\nSeu código de confirmação na Poar Estética é:\n\n*${code}*\n\nUse este código para concluir seu cadastro. Ele expira em 10 minutos.`;
-                console.log('[REGISTER] message to send:', msg);
 
                 if (typeof sendWhatsApp === 'function') {
-                    console.log('[REGISTER] step 2: sendWhatsApp');
-                    try {
-                        const result = await sendWhatsApp(phone, msg);
-                        console.log('[REGISTER] sendWhatsApp full result:', result);
-                        console.log('[REGISTER] anySuccess:', result?.anySuccess);
-                    } catch (err) {
-                        console.error('[REGISTER] sendWhatsApp threw:', err);
-                    }
+                    try { await sendWhatsApp(phone, msg); } catch (_) { /* ignore */ }
                 }
 
                 pendingRegistration = { name, email, password, phone };
-                console.log('[REGISTER] pendingRegistration stored');
-
                 btnLoading(btn, false);
                 closeRegisterModal();
                 openVerifyCodeModal(phone);
-                console.groupEnd();
             } catch (err) {
-                console.error('[REGISTER] fatal error:', err);
-                console.groupEnd();
                 btnLoading(btn, false);
                 showToast('Erro ao gerar código: ' + err.message, 'error');
             }
@@ -634,26 +615,15 @@
         async function resendVerificationCode() {
             if (!pendingRegistration) return;
             const { name, email, phone } = pendingRegistration;
-            console.group('[RESEND] resendVerificationCode start');
-            console.log('input:', { name, email, phone });
             try {
                 const code = await createVerificationCode(phone, email, name);
-                console.log('[RESEND] new code:', code);
                 const msg = `Olá ${name}!\n\nSeu novo código de confirmação na Poar Estética é:\n\n*${code}*\n\nEle expira em 10 minutos.`;
                 if (typeof sendWhatsApp === 'function') {
-                    try {
-                        const result = await sendWhatsApp(phone, msg);
-                        console.log('[RESEND] sendWhatsApp result:', result);
-                    } catch (err) {
-                        console.error('[RESEND] sendWhatsApp threw:', err);
-                    }
+                    try { await sendWhatsApp(phone, msg); } catch (_) { /* ignore */ }
                 }
                 showToast('Código reenviado!', 'success');
                 startResendCooldown(60);
-                console.groupEnd();
             } catch(e) {
-                console.error('[RESEND] fatal:', e);
-                console.groupEnd();
                 showToast('Erro ao reenviar: ' + e.message, 'error');
             }
         }

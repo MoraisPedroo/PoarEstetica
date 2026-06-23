@@ -1,0 +1,36 @@
+# Editores / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Ambiente local
+.env
+.env.local
+.env.*.local
+
+# Vercel
+.vercel/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Dependências
+node_modules/
+
+# Ferramentas de assistência
+.claude/
+.cursor/
+.aider*
+
+# Slides / arquivos pessoais
+*.pdf
+*.pptx
+*.key
+
+# Backups
+*.bak
+*.tmp
