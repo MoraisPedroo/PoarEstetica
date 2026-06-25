@@ -638,8 +638,8 @@
             document.getElementById('tab-' + name).classList.add('active');
             if (name === 'agenda') renderAgenda();
             if (name === 'disponibilidade') renderAvailability();
-            if (name === 'aprovações') { renderPendingBookings(); renderPendingOrders(); renderPendingRedemptions(); }
-            if (name === 'promoções') { renderPromotionFormSelects(); renderPromotionsList(); }
+            if (name === 'aprovacoes') { renderPendingBookings(); renderPendingOrders(); renderPendingRedemptions(); }
+            if (name === 'promocoes') { renderPromotionFormSelects(); renderPromotionsList(); }
         }
 
         async function refreshAll() {
@@ -675,11 +675,11 @@
             const tab = getActiveTab();
             renderDashboard();
             if (tab === 'agenda') renderAgenda();
-            if (tab === 'serviços') renderServicesList();
+            if (tab === 'servicos') renderServicesList();
             if (tab === 'produtos') renderProductsList();
-            if (tab === 'aprovações') { renderPendingBookings(); renderPendingOrders(); renderPendingRedemptions(); }
+            if (tab === 'aprovacoes') { renderPendingBookings(); renderPendingOrders(); renderPendingRedemptions(); }
             if (tab === 'disponibilidade') { renderAvailability(); renderBlockedDates(); }
-            if (tab === 'promoções') { renderPromotionFormSelects(); renderPromotionsList(); }
+            if (tab === 'promocoes') { renderPromotionFormSelects(); renderPromotionsList(); }
         }
 
         function setupRealtimeListeners() {
@@ -704,7 +704,7 @@
                 db.collection('promotionRedemptions').onSnapshot(snap => {
                     cachedRedemptions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     renderDashboard();
-                    if (getActiveTab() === 'aprovações') renderPendingRedemptions();
+                    if (getActiveTab() === 'aprovacoes') renderPendingRedemptions();
                 }, err => console.error('redemptions listener error:', err));
             } catch(e) { console.error(e); }
         }
